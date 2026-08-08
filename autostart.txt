@@ -4,19 +4,21 @@ Step required to automatically run this program after reboot:
 
 add this content:
 
-        [Unit]
-        Description=pylonmonitor Service
-        Wants=network-online.target
-        After=network-online.target
+[Unit]
+Description=pylonmonitor Service
+Wants=network-online.target
+After=network-online.target
 
-        [Service]
-        Type=simple
-        WorkingDirectory=/home/kurt/pylonmon_RPI
-        ExecStart=/home/kurt/pylonmon_RPI/pylonmonitor
-        User=root
+[Service]
+Type=simple
+WorkingDirectory=/home/kurt/pylonmon_RPI
+ExecStart=/home/kurt/pylonmon_RPI/pylonmonitor
+User=root
+StandardOutput=null
+StandardError=null
 
-        [Install]
-        WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 
 enable and start the service:
 

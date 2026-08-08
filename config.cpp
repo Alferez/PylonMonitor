@@ -21,6 +21,15 @@ string deviceTopic = "Pylontech Akku Monitor";
 
 bool mqtt_changed = false;
 
+#ifdef DJ0ABR
+double batteryEnergy[16] = { 3374,  3374, 3374, 3374, 3374, 3374, 3374, 2280};
+int batteryCapacity[16] = { 70, 70, 70, 70, 70, 70, 70, 47 };
+#endif
+#ifdef DL1EV
+double batteryEnergy[16] = { 3374,  3374 };
+int batteryCapacity[16] = { 70, 70 };
+#endif
+
 string getMQTTtopic() 
 {
     // update from config

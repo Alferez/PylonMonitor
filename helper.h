@@ -2,3 +2,6 @@ char* ownIP();
 void install_signal_handler(void (*signalfunction)());
 void sighandler(int signum);
 int isRunning(char *prgname);
+float get_cpu_temperature();
+std::string get_ssid();
+int get_rssi();

@@ -43,6 +43,10 @@ Battery Volt Curr Tempr Base State  Volt. State Curr. State Temp. State SOC  Cou
 #include <jansson.h>
 #include "fifo.h"
 #include "config.h"
+#include "helper.h"
+
+extern double batteryEnergy[16];
+extern int batteryCapacity[16];
 
 READBATT::READBATT()
 {
@@ -297,6 +301,27 @@ void READBATT::publishBattdata()
     // displayCells();
     // return;
 
+    // measure the interval and build an average value
+    static time_t last_execution_time;
+    time_t current_time;
+    double elapsed_time;
+    double sum = 0.0;
+    int num_measurements = 0;
+
+    current_time = time(nullptr);
+    elapsed_time = difftime(current_time, last_execution_time);
+    last_execution_time = current_time;
+
+    // build average
+    num_measurements++;
+    sum += elapsed_time;
+
+    int intervall = (int)(sum / num_measurements);
+    if (num_measurements >= 10) {
+        sum = 0.0;
+        num_measurements = 0;
+    }
+
     // create json file for local web page
     string batstr_json = convertPylonDataToJson();
     std::ofstream outFile("/var/www/html/wxdata/batteryinfo.json");
@@ -310,9 +335,10 @@ void READBATT::publishBattdata()
     // Set key-value pairs in the JSON object
     json_object_set_new(root, "Name", json_string("Pylontech Akku Monitor"));
     json_object_set_new(root, "IP", json_string(myLocalIP.c_str()));
-    json_object_set_new(root, "SSID", json_string("Ethernet"));
-    json_object_set_new(root, "RSSI", json_integer(0));
-    json_object_set_new(root, "Interval", json_integer(20));
+    json_object_set_new(root, "SSID", json_string(get_ssid().c_str()));
+    json_object_set_new(root, "RSSI", json_integer(get_rssi()));
+    json_object_set_new(root, "Interval", json_integer(intervall));
+    json_object_set_new(root, "temperature", json_real(get_cpu_temperature()));
 
     // Serialize JSON object to a string
     char *payload = json_dumps(root, JSON_ENCODE_ANY);
@@ -330,7 +356,8 @@ void READBATT::publishBattdata()
 
     // Cleanup: decrement the reference count of JSON object (frees it if count reaches 0)
     json_decref(root);
-    // publish battery information
+
+    // publish battery current
     for(int battnum = 0; battnum < battnumber; battnum++) {
         json_t *root = json_object();
         json_object_set_new(root, "current", json_real(cells[battnum][0].current));
@@ -344,6 +371,37 @@ void READBATT::publishBattdata()
         }
         std::string topic = getMQTTtopic() + "/current/" + std::to_string(battnum+1);
         send_to_mqtt(topic,string(payload));
+        free(payload);
+        json_decref(root);
+    }
+
+    // publish battery info
+    for(int battnum = 0; battnum < battnumber; battnum++)
+    {
+        json_t *root = json_object();
+
+        json_object_set_new(root, "energy",
+            json_real(batteryEnergy[battnum]));
+
+        json_object_set_new(root, "capacity",
+            json_integer(batteryCapacity[battnum]));
+
+        // Convert JSON object to string
+        char *payload = json_dumps(root, JSON_ENCODE_ANY);
+
+        if(!payload)
+        {
+            printf("JSON serialization failed\n");
+            json_decref(root);
+            return;
+        }
+
+        std::string topic =
+            getMQTTtopic() + "/info/" +
+            std::to_string(battnum + 1);
+
+        send_to_mqtt(topic, std::string(payload));
+
         free(payload);
         json_decref(root);
     }

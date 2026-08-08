@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <iostream>
+#include <fstream>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,6 +15,8 @@
 #include <netdb.h>
 
 #include "helper.h"
+
+using std::string;
 
 // check if it is already running
 int isRunning(char *prgname)
@@ -76,42 +81,108 @@ void install_signal_handler(void (*signalfunction)())
 // get own IP adress
 char* ownIP()
 {
-    static char ip[20] = { 0 };
-
-    struct ifaddrs* ifaddr, * ifa;
-    int s;
+    static char ip[20] = {0};
+    struct ifaddrs* ifaddr, *ifa;
     char host[NI_MAXHOST];
 
     if (getifaddrs(&ifaddr) == -1)
     {
-        printf("cannot read own IP address, getifaddrs faild. Check Networking\n");
-        exit(0);
+        perror("getifaddrs");
+        exit(1);
     }
-
 
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
     {
         if (ifa->ifa_addr == NULL)
             continue;
-
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-        if (ifa->ifa_addr->sa_family == AF_INET)
+        if (ifa->ifa_addr->sa_family == AF_INET
+            && strcmp(ifa->ifa_name, "wlan0") == 0)
         {
+            int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+                                host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0)
             {
                 printf("getnameinfo() failed: %s\n", gai_strerror(s));
-                printf("cannot read own IP address, getnameinfo failed: %s. Check Networking\n", gai_strerror(s));
-                exit(0);
+                continue;
             }
-            if (strncmp(host, "127", 3) != 0)
-            {
-                strcpy(ip, host);
-                break;
-            }
+            strcpy(ip, host);
+            break;
         }
     }
-
     freeifaddrs(ifaddr);
     return ip;
+}
+
+
+float get_cpu_temperature() 
+{
+    string line;
+    float temp;
+    std::ifstream file("/sys/class/thermal/thermal_zone0/temp");
+    if (file.is_open()) {
+        getline(file, line);
+        temp = stof(line) / 1000.0; // Convert from millidegrees Celsius to degrees Celsius
+        file.close();
+        return temp;
+    } else {
+        std::cerr << "Error: Unable to open file." << std::endl;
+        return -1.0; // Return -1.0 if error occurs
+    }
+}
+
+// Function to execute a shell command and return its output
+string exec(const char* cmd) {
+    char buffer[128];
+    string result = "";
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) {
+        printf("popen() failed for: %s\n",cmd);
+        return "";
+    }
+    try {
+        while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+            result += buffer;
+        }
+    } catch (...) {
+        pclose(pipe);
+        throw;
+    }
+    pclose(pipe);
+    return result;
+}
+
+string get_ssid() {
+    string output = exec("iwconfig wlan0");
+    // Check if WLAN is not used or the output indicates an inactive state
+    if (output.find("No such device") != string::npos ||
+        output.find("not associated") != string::npos) {
+        return "Ethernet";
+    }
+    
+    size_t pos = output.find("ESSID:");
+    if (pos != string::npos) {
+        pos += 7; // Skip "ESSID:" and the following quote
+        size_t endPos = output.find_first_of('"', pos);
+        // Check if the closing double quote was found
+        if (endPos != string::npos) {
+            string ssid = output.substr(pos, endPos - pos);
+            return ssid;
+        }
+    }
+    
+    return "Ethernet";
+}
+
+// Function to get the RSSI of the connected AP
+int get_rssi() 
+{
+    string output = exec("iwconfig wlan0");
+    size_t pos = output.find("Signal level=");
+    if (pos != string::npos) {
+        string rssi_str = output.substr(pos + 13, 3); // Extract RSSI value
+        int rssi = stoi(rssi_str);
+        return rssi;
+    } else {
+        return 0;
+    }
 }

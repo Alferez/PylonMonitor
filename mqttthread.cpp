@@ -136,7 +136,15 @@ void MQTTTHREAD::on_message(struct mosquitto *mosq, void *userdata, const struct
 void MQTTTHREAD::on_disconnect(struct mosquitto *mosq, void *userdata, int rc)
 {
     printf("\nDisconnected from MQTT Broker. Reconnect ...\n");
-    connected = false;
+    //connected = false;
+    
+    if (rc != 0) { // Ungeplanter Disconnect
+        int ret = mosquitto_reconnect(mosq);
+        if (ret != MOSQ_ERR_SUCCESS) {
+            printf("Reconnect failed: %d\n", ret);
+            // Ggf. hier Timer setzen und erneut probieren
+        }
+    }
 }
 
 void MQTTTHREAD::publish()

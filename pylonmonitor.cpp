@@ -40,6 +40,10 @@ Raspi supporting WLAN (RPI3, 4 and Zero-W) need remapping of serial port
     serial0 must map to ttyAMA0
 4. to use ttyAMA0 the program must be running as root   
 
+Autostart (for RPI only):
+=========================
+Refer to the autostart.txt file for instructions on setting up the software to start automatically.
+
 Description of the various threads
 ==================================
 
