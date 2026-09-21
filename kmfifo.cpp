@@ -60,9 +60,9 @@ void destroy_fifos()
 {
     for(int i=0; i<fifonum; i++)
     {
-        free(fifo[fifonum].fifomem);
-        free(fifo[fifonum].plen);
-        if (&fifo[fifonum].crit_sec != NULL) pthread_mutex_destroy(&fifo[fifonum].crit_sec);
+        free(fifo[i].fifomem);
+        free(fifo[i].plen);
+        pthread_mutex_destroy(&fifo[i].crit_sec);
     }
 }
 

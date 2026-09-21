@@ -44,6 +44,7 @@ Raspi supporting WLAN (RPI3, 4 and Zero-W) need remapping of serial port
 #include "kmfifo.h" 
 #include "serial.h"
 #include "serial_helper.h"
+#include "config.h"
 
 // functions for the primary UART on the Raspi Pins 8 and 10
 // =========================================================
@@ -54,10 +55,13 @@ int serid = -1;
 // speed ... use definition Bxxx
 void open_serial(int speed)
 {
-    serid = init_serial_interface("/dev/ttyAMA0","", speed); //maybe is /dev/serial0 or /dev/ttyS0
+    char serialPortBuf[50];
+    strncpy(serialPortBuf, serialPort.c_str(), sizeof(serialPortBuf) - 1);
+    serialPortBuf[sizeof(serialPortBuf) - 1] = '\0';
+    serid = init_serial_interface(serialPortBuf,"", speed);
     if(serid == -1)
     {
-        printf("connot open primary serial interface\n");
+        printf("connot open primary serial interface: %s\n", serialPort.c_str());
         exit(0);
     }
 }

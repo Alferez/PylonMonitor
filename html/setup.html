@@ -3,128 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pylontech Monitor</title>
+    <title>Pylontech Monitor Setup</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='30' y='20' width='40' height='60' rx='5' fill='%2300d2ff'/><rect x='40' y='10' width='20' height='10' rx='2' fill='%2300d2ff'/><rect x='35' y='25' width='30' height='50' fill='%2338ef7d'/></svg>">
 </head>
-
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f5f5f5;
+    * {
         margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column; /* Ensures vertical stacking */
-        height: 100vh;
-    }
-
-    .form-container {
-        width: 100%;
-        max-width: 400px; /* Matches form width for alignment */
-        text-align: center; /* Centers the title */
-    }
-
-    h1 {
-        color: #333;
-        margin-bottom: 20px; /* Adds space between the title and the form */
-    }
-
-    h2 {
-        color: #0a30ad;
-        margin-bottom: 20px; /* Adds space between the title and the form */
-    }
-
-    form {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    label {
-        font-weight: bold;
-        color: #555;
-    }
-
-    input[type="text"],
-    input[type="password"] {
-        width: calc(100% - 22px);
-        padding: 10px;
-        margin: 8px 0 16px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 0;
         box-sizing: border-box;
-        font-size: 18px; /* Increased font size for better readability */
     }
 
-
-    input[type="submit"] {
-        background-color: #007BFF;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        width: 100%;
-        font-size: 16px;
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #0c0e1a 0%, #1a1d2e 100%);
+        color: #fff;
+        min-height: 100vh;
+        padding: 20px;
     }
 
-    input[type="submit"]:hover {
-        background-color: #0056b3;
-    }
-
-    #confirmationMessage {
-        display: none;
-        font-size: 20px;
-        font-weight: bold;
-        color: #28a745;
-        margin: 20px 0;
+    .header {
         text-align: center;
+        margin-bottom: 40px;
     }
 
-    .copyright {
-        color: grey; /* Sets the color to grey */
-        font-size: 12px; /* Sets a small font size */
-        text-align: center; /* Centers the text */
-        margin-top: 20px; /* Adds some space above the copyright message */
+    .header h1 {
+        font-size: 2.5em;
+        background: linear-gradient(45deg, #00d2ff, #38ef7d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+    }
+
+    .header p {
+        color: #8892b0;
+        font-size: 1.1em;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 40px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #00d2ff;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(0, 210, 255, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #8892b0;
+        font-size: 0.9em;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 1em;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #00d2ff;
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    }
+
+    .form-group input::placeholder {
+        color: #4a5568;
+    }
+
+    .form-group .hint {
+        color: #4a5568;
+        font-size: 0.8em;
+        margin-top: 5px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, #00d2ff, #38ef7d);
+        color: #0c0e1a;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .message {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        font-weight: bold;
+        display: none;
+    }
+
+    .message.success {
+        background: rgba(56, 239, 125, 0.2);
+        color: #38ef7d;
+        border: 1px solid rgba(56, 239, 125, 0.3);
+        display: block;
+    }
+
+    .message.error {
+        background: rgba(255, 106, 0, 0.2);
+        color: #ff6a00;
+        border: 1px solid rgba(255, 106, 0, 0.3);
+        display: block;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: #8892b0;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+        color: #00d2ff;
     }
 </style>
 
 <body>
+    <div class="header">
+        <h1>Pylontech Monitor Setup</h1>
+        <p>Configure your battery monitor</p>
+    </div>
 
-    <h1>Pylontech Monitor Configuration</h1>
+    <div class="container">
+        <div class="form-card">
+            <form id="mqttConfigForm" method="post" onsubmit="submitForm(); return false;">
+                <div class="form-section">
+                    <div class="section-title">MQTT Settings</div>
+                    
+                    <div class="form-group">
+                        <label for="mqttBrokerIP">MQTT Broker IP</label>
+                        <input type="text" id="mqttBrokerIP" name="mqttBrokerIP" required placeholder="192.168.1.100">
+                        <div id="ipError" style="color: #ff6a00; font-size: 0.9em; margin-top: 5px;"></div>
+                    </div>
 
-    <form id="mqttConfigForm" method="post" onsubmit="submitForm(); return false;">
-        <h2>MQTT Settings</h2>
-        <label for="mqttBrokerIP">MQTT Broker IP:</label><br>
-        <input type="text" id="mqttBrokerIP" name="mqttBrokerIP" required>
-        <div id="ipError" style="color: red;"></div>
-        <br>
+                    <div class="form-group">
+                        <label for="brokerusername">(optional) MQTT-Broker User Name</label>
+                        <input type="text" id="brokerusername" name="brokerusername">
+                    </div>
 
-        <label for="brokerusername">(optional) MQTT-Broker User Name:</label><br>
-        <input type="text" id="brokerusername" name="brokerusername"><br>
+                    <div class="form-group">
+                        <label for="brokerpassword">(optional) MQTT-Broker Password</label>
+                        <input type="password" id="brokerpassword" name="brokerpassword">
+                    </div>
 
-        <label for="brokerpassword">(optional) MQTT-Broker Password:</label><br>
-        <input type="text" id="brokerpassword" name="brokerpassword"><br>
+                    <div class="form-group">
+                        <label for="publishTopic">Top Level Topic for Publishing</label>
+                        <input type="text" id="publishTopic" name="publishTopic" required placeholder="pylonmonitor">
+                    </div>
 
-        <label for="publishTopic">Top Level Topic for Publishing:</label><br>
-        <input type="text" id="publishTopic" name="publishTopic" required><br>
+                    <div class="form-group">
+                        <label for="responseTopic">Top Level Topic for Responses</label>
+                        <input type="text" id="responseTopic" name="responseTopic" required>
+                    </div>
 
-        <label for="responseTopic">Top Level Topic for Responses (currently not used):</label><br>
-        <input type="text" id="responseTopic" name="responseTopic" required><br>
+                    <div class="form-group">
+                        <label for="locationTopic">Location Topic</label>
+                        <input type="text" id="locationTopic" name="locationTopic" required>
+                    </div>
 
-        <label for="locationTopic">Location Topic:</label><br>
-        <input type="text" id="locationTopic" name="locationTopic" required><br>
+                    <div class="form-group">
+                        <label for="deviceTopic">Device Topic</label>
+                        <input type="text" id="deviceTopic" name="deviceTopic" required>
+                    </div>
+                </div>
 
-        <label for="deviceTopic">Device Topic:</label><br>
-        <input type="text" id="deviceTopic" name="deviceTopic" required><br>
+                <div class="form-section">
+                    <div class="section-title">Monitoring Settings</div>
+                    
+                    <div class="form-group">
+                        <label for="serialPort">Serial Port</label>
+                        <input type="text" id="serialPort" name="serialPort" placeholder="/dev/ttyAMA0">
+                        <div class="hint">Serial port device (e.g., /dev/ttyAMA0, /dev/ttyUSB0)</div>
+                    </div>
 
-        <input type="submit" value="SUBMIT">
-        <button type="button" id="cancelButton" style="background-color: #dc3545; color: white; padding: 10px 20px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px;">CANCEL</button>
-    </form>
-    <div id="confirmationMessage"></div>
-    <p class="copyright">© by DJ0ABR</p>
+                    <div class="form-group">
+                        <label for="pollInterval">Poll Interval (seconds)</label>
+                        <input type="number" id="pollInterval" name="pollInterval" min="5" max="300" value="15" placeholder="15">
+                        <div class="hint">Time between full polling cycles (default: 15 seconds)</div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">CANCEL</button>
+                    <button type="submit" class="btn btn-primary">SUBMIT</button>
+                </div>
+            </form>
+            <div id="confirmationMessage" class="message"></div>
+        </div>
+    </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     fetch('defaultdata.php')
@@ -142,6 +276,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('responseTopic').value = data.responseTopic || '';
         document.getElementById('locationTopic').value = data.locationTopic || '';
         document.getElementById('deviceTopic').value = data.deviceTopic || '';
+        document.getElementById('serialPort').value = data.serialPort || '/dev/ttyAMA0';
+        document.getElementById('pollInterval').value = data.pollInterval || 15;
     })
     .catch(error => {
         console.error('There was a problem with your fetch operation:', error);
@@ -155,49 +291,37 @@ function submitForm() {
 
     xhr.onload = function () {
         if (xhr.status === 200) {
-            // Update the page to show confirmation message
             var confirmationDiv = document.getElementById('confirmationMessage');
             confirmationDiv.innerHTML = 'Data submitted successfully! Redirecting...';
-            confirmationDiv.style.display = 'block';
+            confirmationDiv.className = 'message success';
             document.getElementById('mqttConfigForm').style.display = 'none';
             
-            // Wait for 2 seconds before redirecting
             setTimeout(function() {
                 window.location.href = 'index.html';
             }, 3000);
         } else {
-            // Update the page to show an error message
             var confirmationDiv = document.getElementById('confirmationMessage');
             confirmationDiv.innerHTML = 'Submission failed. Please try again.';
-            confirmationDiv.style.display = 'block';
+            confirmationDiv.className = 'message error';
         }
     };
 
     xhr.send(formData);
 }
 
-// Function to validate IP address
 function validateIP(ip) {
     var ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     return ipRegex.test(ip);
 }
 
-// Attaching the event listener to the input field
 document.getElementById('mqttBrokerIP').addEventListener('input', function() {
     var ip = this.value;
     if(validateIP(ip)) {
-        // If the IP is valid, you might want to hide or remove any error message
-        document.getElementById('ipError').textContent = ''; // Clears the error message
+        document.getElementById('ipError').textContent = '';
     } else {
-        // If the IP is invalid, show an error message
         document.getElementById('ipError').textContent = 'Enter a valid IP Address';
     }
 });
-
-document.getElementById('cancelButton').addEventListener('click', function() {
-    window.location.href = 'index.html';
-});
-
 </script>
 
 </body>

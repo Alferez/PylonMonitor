@@ -9,11 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "publishTopic" => $_POST['publishTopic'],
         "responseTopic" => $_POST['responseTopic'],
         "locationTopic" => $_POST['locationTopic'],
-        "deviceTopic" => $_POST['deviceTopic']
+        "deviceTopic" => $_POST['deviceTopic'],
+        "serialPort" => $_POST['serialPort'],
+        "pollInterval" => $_POST['pollInterval']
     );
 
-    // Encode the data as JSON
-    $jsonData = json_encode($data, JSON_PRETTY_PRINT);
+    // Encode the data as JSON without escaping slashes
+    $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
     // Specify the file path where the data will be saved
     $filePath = __DIR__ . '/wxdata/configData.json';

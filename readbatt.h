@@ -5,7 +5,7 @@
 
 using string = std::string;
 
-#define MAXRXBUFLEN 2100
+#define MAXRXBUFLEN 8192
 #define MAXBATTNUMBER   (64+1)  // +1 because the first batt has No 1 (not 0)
 #define CELLNUMBER      15      // number of cells per battery
 
@@ -22,6 +22,8 @@ typedef struct {
     double coulomb;
     char balance;
 } BatteryCell;
+
+
 
 class READBATT
 {
@@ -42,6 +44,7 @@ private:
     enum PYLONSTATE {
         PYLON_SEARCH,   // check if a pylontech battery is available
         PYLON_ACK,      // read the response to the search message
+        PYLON_PWR,      // read the power information to get battery count
         PYLON_REQUEST,  // request data from the next battery number (beginning at 1)
         PYLON_READ,     // read data from the battery
     };

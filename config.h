@@ -18,4 +18,6 @@ extern string publishTopic;
 extern string responseTopic;
 extern string locationTopic;
 extern string deviceTopic;
+extern string serialPort;
 extern bool mqtt_changed;
+extern int pollInterval;

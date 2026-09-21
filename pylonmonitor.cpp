@@ -62,6 +62,7 @@ web thread .... prepares the battery values for the webserver
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <sys/stat.h>
 #include "pylonmonitor.h"
 #include "readbatt.h"
 #include "mqttthread.h"
@@ -95,6 +96,9 @@ int main(int argc, char *argv[])
 
     // create default config, if it does not already exist
     saveDefaultConfigToJson();
+
+    // read the configuration
+    readConfigFromJson();
 
     // read the local IP address which is sent with an MQTT status message
     myLocalIP = std::string(ownIP());
@@ -138,6 +142,9 @@ void exit_program()
 
 void copyFile() 
 {
+    // Create wxdata directory if it doesn't exist
+    mkdir("/var/www/html/wxdata", 0777);
+
     const std::string sourcePath = "./html/index.html";
     const std::string destinationPath = "/var/www/html/index.html";
 

@@ -40,6 +40,7 @@ Battery Volt Curr Tempr Base State  Volt. State Curr. State Temp. State SOC  Cou
 #include <string.h>
 #include <fstream>
 #include <iostream>
+#include <ctime>
 #include <jansson.h>
 #include "fifo.h"
 #include "config.h"
@@ -93,6 +94,8 @@ void READBATT::loop_pylon()
 static int timeout = 0;
 static int lasttime = 0;
 static int acttime = 0;
+static int cycleStart = 0;
+static bool cycleInProgress = false;
 
     if(pylonState == PYLON_SEARCH) {
         // send LF, pylontech should respond with a prompt
@@ -114,7 +117,7 @@ static int acttime = 0;
                 printf("batt found\n");
                 acttime = 0;
                 lasttime = -1000; //make first request immediately
-                pylonState = PYLON_REQUEST;
+                pylonState = PYLON_PWR;
                 return;
             }
         } else {
@@ -130,10 +133,34 @@ static int acttime = 0;
         }
     }
 
+    if(pylonState == PYLON_PWR) {
+        // send pwr command to get battery count
+        acttime++;
+        if((acttime - lasttime) < 20) {
+            usleep(100000);
+            return;
+        }
+        lasttime = acttime;
+        printf("req pwr\n");
+        serial_printf("pwr\n");
+        timeout = 0;
+        rxidx = 0;
+        pylonState = PYLON_READ;
+        return;
+    }
+
     if(pylonState == PYLON_REQUEST) {
         // battery found, request the next batt data
         // wait for 1s before making a new request
         acttime++;
+        // wait pollInterval seconds before starting a new cycle
+        if(cycleInProgress && battnum == 1) {
+            if(acttime - cycleStart < pollInterval * 10) {
+                usleep(100000);
+                return;
+            }
+            cycleInProgress = false;
+        }
         if((acttime - lasttime) < 20) {
             // too early for next request
             usleep(100000);
@@ -141,6 +168,14 @@ static int acttime = 0;
         }
         lasttime = acttime;
         printf("req bat %d\n",battnum);
+        // if the write buffer is full, restart the search to clear it
+        if(write_serial_free() == -1) {
+            printf("write buffer full, restarting search\n");
+            acttime = 0;
+            lasttime = 0;
+            pylonState = PYLON_SEARCH;
+            return;
+        }
         serial_printf("bat %d\n", battnum);
         timeout = 0;
         rxidx = 0;
@@ -159,12 +194,12 @@ static int acttime = 0;
                 // store received char
                 pylon_rxbuf[rxidx++] = c;
                 pylon_rxbuf[rxidx] = 0;
-                if(rxidx >= MAXRXBUFLEN) {
-                    // overflow
+                if(rxidx >= MAXRXBUFLEN - 1) {
+                    // overflow - process what we have and restart
                     printf("batt read pylon_rxbuf overflow\n");
-                    acttime = 0;
-                    lasttime =0;
-                    pylonState = PYLON_REQUEST;
+                    pylon_rxbuf[MAXRXBUFLEN - 1] = 0;
+                    processBatData();
+                    rxidx = 0;
                 }
 
                 if(strstr(pylon_rxbuf,"Invalid")) {
@@ -181,14 +216,23 @@ static int acttime = 0;
 
                 if (c == '>') {
                     // prompt received
-                    if(battnum > battnumber) battnumber = battnum;
                     pylon_rxbuf[rxidx] = 0;   // terminate string
-                    //printf("{%s}\n",pylon_rxbuf);
                     processBatData();
-                    // go to the next battery (never read more than 64 batteries)
-                    if(++battnum > 64) battnum = 1;
+                    // if we just read pwr data, start with battery 1
+                    if(strstr(pylon_rxbuf, "pwr") != NULL) {
+                        battnum = 1;
+                    } else {
+                        // go to the next battery (never read more than 64 batteries)
+                        if(++battnum > 64) battnum = 1;
+                    }
                     acttime = 0;
                     lasttime =0;
+                    // if this was the last battery in the cycle, wait pollInterval seconds
+                    if(battnum > battnumber) {
+                        battnum = 1;
+                        cycleStart = acttime;
+                        cycleInProgress = true;
+                    }
                     pylonState = PYLON_REQUEST;
                     return;
                 }
@@ -197,10 +241,12 @@ static int acttime = 0;
             }
         } else {
             // nothing received
-            if(++timeout > 5000) {
-                // nothing received within 5s
+            if(++timeout > 2000) {
+                // nothing received within 2s
                 printf("batt read timeout\n");
                 // repeat with the same battery
+                acttime = 0;
+                lasttime = 0;
                 pylonState = PYLON_REQUEST;
                 usleep(1000);
             }
@@ -234,6 +280,36 @@ void READBATT::processBatData()
 {
     string s = shrink(pylon_rxbuf);
     const char *batteryString = s.c_str();
+
+
+
+    // Check if this is a pwr command response
+    if(strstr(batteryString, "pwr") != NULL) {
+        // Parse pwr response to get battery count
+        // Count lines that don't contain "Absent" and are not headers
+        char *line = strtok((char *)batteryString, "\n");
+        int count = 0;
+        int lineNum = 0;
+        while (line) {
+            lineNum++;
+            // Skip header lines (first 2 lines)
+            if(lineNum > 2) {
+                // Check if this line contains battery data (not "Absent")
+                if(strstr(line, "Absent") == NULL && strstr(line, "Command") == NULL && strstr(line, "pylon") == NULL) {
+                    // Check if it starts with a number (battery number)
+                    if(line[0] >= '1' && line[0] <= '9') {
+                        count++;
+                    }
+                }
+            }
+            line = strtok(NULL, "\n");
+        }
+        if(count > 0) {
+            battnumber = count;
+            printf("Battery count from pwr: %d\n", battnumber);
+        }
+        return;
+    }
 
     //printf("RXed:\n{%s}\n",batteryString);
     //printf("installed batts: %d\n",battnumber);
@@ -333,10 +409,8 @@ void READBATT::publishBattdata()
     json_t *root = json_object();
 
     // Set key-value pairs in the JSON object
-    json_object_set_new(root, "Name", json_string("Pylontech Akku Monitor"));
+    json_object_set_new(root, "Name", json_string("Pylontech Battery Monitor"));
     json_object_set_new(root, "IP", json_string(myLocalIP.c_str()));
-    json_object_set_new(root, "SSID", json_string(get_ssid().c_str()));
-    json_object_set_new(root, "RSSI", json_integer(get_rssi()));
     json_object_set_new(root, "Interval", json_integer(intervall));
     json_object_set_new(root, "temperature", json_real(get_cpu_temperature()));
 
@@ -458,6 +532,17 @@ void READBATT::sendJson(int mode, char *name)
 string READBATT::convertPylonDataToJson() 
 {
     json_t* root = json_array();
+
+    // Add timestamp
+    char timestamp[50];
+    time_t now = time(nullptr);
+    struct tm *tm_info = localtime(&now);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
+    
+    json_t* meta = json_object();
+    json_object_set_new(meta, "timestamp", json_string(timestamp));
+    json_object_set_new(meta, "batteryCount", json_integer(battnumber));
+    json_array_append_new(root, meta);
 
     for (int i = 0; i < battnumber; ++i) {
         json_t* pylon = json_object();

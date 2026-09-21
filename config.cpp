@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <ctime>
 #include "config.h"
 #include <unistd.h>
 #include <pwd.h>
@@ -14,12 +15,14 @@ string password = "";
 string mqttBrokerIP = "1.2.3.4";
 string brokerusername;
 string brokerpassword;
-string publishTopic = "kmpub";
-string responseTopic = "kmcmd";
-string locationTopic = "Solaranlage";
-string deviceTopic = "Pylontech Akku Monitor";
+string publishTopic = "pylontech";
+string responseTopic = "pyloncmd";
+string locationTopic = "PylonMonitor";
+string deviceTopic = "battery";
+string serialPort = "/dev/ttyAMA0";
 
 bool mqtt_changed = false;
+int pollInterval = 15;
 
 #ifdef DJ0ABR
 double batteryEnergy[16] = { 3374,  3374, 3374, 3374, 3374, 3374, 3374, 2280};
@@ -32,9 +35,15 @@ int batteryCapacity[16] = { 70, 70 };
 
 string getMQTTtopic() 
 {
-    // update from config
-    readConfigFromJson();
-    return publishTopic + "/" + locationTopic + "/" + deviceTopic;
+    static string cached_topic;
+    static time_t last_update = 0;
+    time_t now = time(nullptr);
+    if (now - last_update >= 30) {
+        readConfigFromJson();
+        cached_topic = publishTopic + "/" + locationTopic + "/" + deviceTopic;
+        last_update = now;
+    }
+    return cached_topic;
 }
  
 bool saveDefaultConfigToJson() 
@@ -52,6 +61,8 @@ bool saveDefaultConfigToJson()
     json_object_set_new(root, "responseTopic", json_string(responseTopic.c_str()));
     json_object_set_new(root, "locationTopic", json_string(locationTopic.c_str()));
     json_object_set_new(root, "deviceTopic", json_string(deviceTopic.c_str()));
+    json_object_set_new(root, "serialPort", json_string(serialPort.c_str()));
+    json_object_set_new(root, "pollInterval", json_integer(pollInterval));
     
     // Dump the JSON object to a string
     char *jsonString = json_dumps(root, JSON_INDENT(4));
@@ -143,6 +154,11 @@ bool readConfigFromJson()
     responseTopic = json_string_value(json_object_get(root, "responseTopic"));
     locationTopic = json_string_value(json_object_get(root, "locationTopic"));
     deviceTopic = json_string_value(json_object_get(root, "deviceTopic"));
+    serialPort = json_string_value(json_object_get(root, "serialPort"));
+    json_t *poll_int = json_object_get(root, "pollInterval");
+    if (poll_int && json_is_integer(poll_int)) {
+        pollInterval = (int)json_integer_value(poll_int);
+    }
 
     if( last_brokerIP != mqttBrokerIP ||
         last_brokerusername != brokerusername ||
