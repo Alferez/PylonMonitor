@@ -11,7 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "locationTopic" => $_POST['locationTopic'],
         "deviceTopic" => $_POST['deviceTopic'],
         "serialPort" => $_POST['serialPort'],
-        "pollInterval" => $_POST['pollInterval']
+        "pollInterval" => $_POST['pollInterval'],
+        "homeAssistantMode" => isset($_POST['homeAssistantMode']) ? true : false,
+        "homeAssistantPrefix" => $_POST['homeAssistantPrefix']
     );
 
     // Encode the data as JSON without escaping slashes

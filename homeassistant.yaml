@@ -1,0 +1,213 @@
+# Configuración para Home Assistant - Pylontech Battery Monitor
+# Copia este contenido a tu configuration.yaml o a un archivo separado
+
+# For Different Batteries
+# replace "Battery 1" to "Battery X" and "battery_pack_1" to "battery_pack_X" 
+
+
+  - name: "Battery 1 Pack Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_pack_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery-high
+
+  - name: "Battery 1 Pack Current"
+    state_topic: "pylontech/monitor/battery_pack_1_pack_current"
+    unit_of_measurement: "A"
+    device_class: current
+    icon: mdi:current-dc
+
+  - name: "Battery 1 State of Charge"
+    state_topic: "pylontech/monitor/battery_pack_1_state_of_charge"
+    unit_of_measurement: "%"
+    device_class: battery
+    icon: mdi:battery-100
+
+  - name: "Battery 1 Delta V"
+    state_topic: "pylontech/monitor/battery_pack_1_delta_v"
+    unit_of_measurement: "mV"
+    icon: mdi:battery-alert
+
+    # Cell Voltage 
+
+  - name: "Battery 1 Cell 0 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_0_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 1 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_1_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 2 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_2_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 3 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_3_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 4 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_4_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 5 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_5_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 6 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_6_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 7 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_7_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 8 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_8_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 9 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_9_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 10 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_10_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 11 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_11_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 12 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_12_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 13 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_13_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  - name: "Battery 1 Cell 14 Voltage"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_14_voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+
+  # Temperaturas (ejemplo: celdas 0-2)
+
+  - name: "Battery 1 Cell 0 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_0_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 1 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_1_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 2 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_2_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 3 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_3_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 4 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_4_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 5 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_5_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 6 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_6_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 7 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_7_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 8 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_8_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 9 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_9_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 10 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_10_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 11 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_11_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 12 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_12_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 13 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_13_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+
+  - name: "Battery 1 Cell 14 Temperature"
+    state_topic: "pylontech/monitor/battery_pack_1_cell_14_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer

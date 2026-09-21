@@ -5,7 +5,7 @@
 
 using string = std::string;
 
-#define MAXRXBUFLEN 8192
+#define MAXRXBUFLEN 16384
 #define MAXBATTNUMBER   (64+1)  // +1 because the first batt has No 1 (not 0)
 #define CELLNUMBER      15      // number of cells per battery
 
@@ -23,6 +23,15 @@ typedef struct {
     char balance;
 } BatteryCell;
 
+typedef struct {
+    bool isNewModel;
+    char model[50];
+    char serial[50];
+    char firmware[20];
+    char hwVersion[20];
+    char swVersion[20];
+} BatteryInfo;
+
 
 
 class READBATT
@@ -38,6 +47,7 @@ private:
     void processBatData();
     void publishBattdata();
     void sendJson(int mode, char *name);
+    void publishHomeAssistantData();
     void displayCells();
     string convertPylonDataToJson();
 
@@ -47,6 +57,7 @@ private:
         PYLON_PWR,      // read the power information to get battery count
         PYLON_REQUEST,  // request data from the next battery number (beginning at 1)
         PYLON_READ,     // read data from the battery
+        PYLON_INFO,     // read info from the battery (new models only)
     };
 
     int pylonState = PYLON_SEARCH;      // state machine's actual state
@@ -55,6 +66,7 @@ private:
     char pylon_rxbuf[MAXRXBUFLEN];      // read buffer for information received from the battery
     int rxidx = 0;                      // index pointer for pylon_rxbuf
     BatteryCell cells[MAXBATTNUMBER][CELLNUMBER]; // array to hold all battery data
+    BatteryInfo batteryInfo[MAXBATTNUMBER];       // array to hold battery info data
 };
 
 #endif // _READBATT_H_

@@ -20,6 +20,8 @@ string responseTopic = "pyloncmd";
 string locationTopic = "PylonMonitor";
 string deviceTopic = "battery";
 string serialPort = "/dev/ttyAMA0";
+bool homeAssistantMode = false;
+string homeAssistantPrefix = "battery";
 
 bool mqtt_changed = false;
 int pollInterval = 15;
@@ -62,6 +64,8 @@ bool saveDefaultConfigToJson()
     json_object_set_new(root, "locationTopic", json_string(locationTopic.c_str()));
     json_object_set_new(root, "deviceTopic", json_string(deviceTopic.c_str()));
     json_object_set_new(root, "serialPort", json_string(serialPort.c_str()));
+    json_object_set_new(root, "homeAssistantMode", json_boolean(homeAssistantMode));
+    json_object_set_new(root, "homeAssistantPrefix", json_string(homeAssistantPrefix.c_str()));
     json_object_set_new(root, "pollInterval", json_integer(pollInterval));
     
     // Dump the JSON object to a string
@@ -76,6 +80,34 @@ bool saveDefaultConfigToJson()
     // Check if the file already exists
     if (access("/var/www/html/wxdata/configData.json", F_OK) != -1) {
         std::cerr << "File already exists.\n";
+        // Check if it has the HA fields, if not, update it
+        std::ifstream checkFile("/var/www/html/wxdata/configData.json");
+        if (checkFile.is_open()) {
+            std::stringstream checkStream;
+            checkStream << checkFile.rdbuf();
+            std::string checkContent = checkStream.str();
+            checkFile.close();
+            
+            if (checkContent.find("homeAssistantMode") == std::string::npos) {
+                // Add the missing fields
+                json_error_t error;
+                json_t *existing = json_loads(checkContent.c_str(), 0, &error);
+                if (existing) {
+                    json_object_set_new(existing, "homeAssistantMode", json_boolean(homeAssistantMode));
+                    json_object_set_new(existing, "homeAssistantPrefix", json_string(homeAssistantPrefix.c_str()));
+                    char *updatedJson = json_dumps(existing, JSON_INDENT(4));
+                    if (updatedJson) {
+                        std::ofstream updateFile("/var/www/html/wxdata/configData.json");
+                        if (updateFile.is_open()) {
+                            updateFile << updatedJson;
+                            updateFile.close();
+                            free(updatedJson);
+                        }
+                    }
+                    json_decref(existing);
+                }
+            }
+        }
         // Cleanup
         json_decref(root);
         free(jsonString);
@@ -154,7 +186,13 @@ bool readConfigFromJson()
     responseTopic = json_string_value(json_object_get(root, "responseTopic"));
     locationTopic = json_string_value(json_object_get(root, "locationTopic"));
     deviceTopic = json_string_value(json_object_get(root, "deviceTopic"));
-    serialPort = json_string_value(json_object_get(root, "serialPort"));
+    const char *serialPortStr = json_string_value(json_object_get(root, "serialPort"));
+    if(serialPortStr) serialPort = serialPortStr;
+    else serialPort = "/dev/ttyAMA0";
+    const char *haPrefixStr = json_string_value(json_object_get(root, "homeAssistantPrefix"));
+    if(haPrefixStr) homeAssistantPrefix = haPrefixStr;
+    else homeAssistantPrefix = "No";
+    homeAssistantMode = json_boolean_value(json_object_get(root, "homeAssistantMode"));
     json_t *poll_int = json_object_get(root, "pollInterval");
     if (poll_int && json_is_integer(poll_int)) {
         pollInterval = (int)json_integer_value(poll_int);

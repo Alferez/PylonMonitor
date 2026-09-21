@@ -250,6 +250,22 @@
                     </div>
                 </div>
 
+                <div class="form-section">
+                    <div class="section-title">Home Assistant Integration</div>
+                    
+                    <div class="form-group">
+                        <label for="homeAssistantMode">Enable Home Assistant format</label>
+                        <input type="checkbox" id="homeAssistantMode" name="homeAssistantMode">
+                        <div class="hint">Publish MQTT data in Home Assistant Pylontech Battery Card format</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="homeAssistantPrefix">Entity Prefix</label>
+                        <input type="text" id="homeAssistantPrefix" name="homeAssistantPrefix" value="battery" placeholder="battery">
+                        <div class="hint">Prefix for Home Assistant entities (e.g., battery, sok, pylontech)</div>
+                    </div>
+                </div>
+
                 <div class="btn-group">
                     <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">CANCEL</button>
                     <button type="submit" class="btn btn-primary">SUBMIT</button>
@@ -278,6 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('deviceTopic').value = data.deviceTopic || '';
         document.getElementById('serialPort').value = data.serialPort || '/dev/ttyAMA0';
         document.getElementById('pollInterval').value = data.pollInterval || 15;
+        document.getElementById('homeAssistantMode').checked = data.homeAssistantMode === true || data.homeAssistantMode === "true";
+        document.getElementById('homeAssistantPrefix').value = data.homeAssistantPrefix || 'battery';
     })
     .catch(error => {
         console.error('There was a problem with your fetch operation:', error);

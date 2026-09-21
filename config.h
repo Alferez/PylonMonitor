@@ -19,5 +19,7 @@ extern string responseTopic;
 extern string locationTopic;
 extern string deviceTopic;
 extern string serialPort;
+extern bool homeAssistantMode;
+extern string homeAssistantPrefix;
 extern bool mqtt_changed;
 extern int pollInterval;

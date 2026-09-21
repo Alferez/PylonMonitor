@@ -183,6 +183,29 @@ static bool cycleInProgress = false;
         return;
     }
 
+    if(pylonState == PYLON_INFO) {
+        // Request info from new model batteries
+        acttime++;
+        if((acttime - lasttime) < 20) {
+            usleep(100000);
+            return;
+        }
+        lasttime = acttime;
+        printf("req info %d\n", battnum);
+        if(write_serial_free() == -1) {
+            printf("write buffer full, restarting search\n");
+            acttime = 0;
+            lasttime = 0;
+            pylonState = PYLON_SEARCH;
+            return;
+        }
+        serial_printf("info %d\n", battnum);
+        timeout = 0;
+        rxidx = 0;
+        pylonState = PYLON_READ;
+        return;
+    }
+
     if(pylonState == PYLON_READ) {
         // read the response from the battery
         // read all bytes until the prompt is received
@@ -217,13 +240,27 @@ static bool cycleInProgress = false;
                 if (c == '>') {
                     // prompt received
                     pylon_rxbuf[rxidx] = 0;   // terminate string
+                    bool wasInfoCommand = (strstr(pylon_rxbuf, "info") != NULL);
+                    printf("DEBUG: Received %d bytes for pwr command\n", rxidx);
+                    printf("DEBUG: Buffer content:\n%s\n", pylon_rxbuf);
                     processBatData();
                     // if we just read pwr data, start with battery 1
                     if(strstr(pylon_rxbuf, "pwr") != NULL) {
                         battnum = 1;
-                    } else {
-                        // go to the next battery (never read more than 64 batteries)
+                    } else if(wasInfoCommand) {
+                        // Just read info, go to next battery
                         if(++battnum > 64) battnum = 1;
+                    } else {
+                        // Just read bat data, check if we need to request info for this battery
+                        // New models have isNewModel = true
+                        if(battnum <= battnumber && batteryInfo[battnum-1].isNewModel) {
+                            // Request info for new model battery
+                            pylonState = PYLON_INFO;
+                            return;
+                        } else {
+                            // go to the next battery (never read more than 64 batteries)
+                            if(++battnum > 64) battnum = 1;
+                        }
                     }
                     acttime = 0;
                     lasttime =0;
@@ -283,22 +320,87 @@ void READBATT::processBatData()
 
 
 
+    // Check if this is an info command response
+    if(strstr(batteryString, "info") != NULL) {
+        // Parse info response to get battery details
+        char *line = strtok((char *)batteryString, "\n");
+        int lineNum = 0;
+        
+        while (line) {
+            lineNum++;
+            // Skip header lines and find battery data
+            if(lineNum > 2) {
+                // Check if this line contains battery data
+                if(strstr(line, "Absent") == NULL && strstr(line, "Command") == NULL && strstr(line, "pylon") == NULL) {
+                    // Check if it starts with a number (battery number)
+                    if(line[0] >= '1' && line[0] <= '9') {
+                        int battNum = atoi(line);
+                        // Parse the info line
+                        // Format: 1  US3000C  SN123456789  FW1.0.0  HW1.0  SW1.0  ...
+                        char model[50], serial[50], fw[20], hw[20], sw[20];
+                        sscanf(line, "%*d %s %s %s %s %s", model, serial, fw, hw, sw);
+                        
+                        snprintf(batteryInfo[battNum-1].model, sizeof(batteryInfo[battNum-1].model), "%s", model);
+                        snprintf(batteryInfo[battNum-1].serial, sizeof(batteryInfo[battNum-1].serial), "%s", serial);
+                        snprintf(batteryInfo[battNum-1].firmware, sizeof(batteryInfo[battNum-1].firmware), "%s", fw);
+                        snprintf(batteryInfo[battNum-1].hwVersion, sizeof(batteryInfo[battNum-1].hwVersion), "%s", hw);
+                        snprintf(batteryInfo[battNum-1].swVersion, sizeof(batteryInfo[battNum-1].swVersion), "%s", sw);
+                        
+                        printf("Battery %d info: Model=%s, Serial=%s, FW=%s\n", 
+                               battNum, batteryInfo[battNum-1].model, 
+                               batteryInfo[battNum-1].serial, 
+                               batteryInfo[battNum-1].firmware);
+                    }
+                }
+            }
+            line = strtok(NULL, "\n");
+        }
+        return;
+    }
+
     // Check if this is a pwr command response
     if(strstr(batteryString, "pwr") != NULL) {
-        // Parse pwr response to get battery count
-        // Count lines that don't contain "Absent" and are not headers
+        // Parse pwr response to get battery count and detect new/old model
         char *line = strtok((char *)batteryString, "\n");
         int count = 0;
         int lineNum = 0;
+        
+        printf("DEBUG: Processing pwr response\n");
+        printf("DEBUG: First line: %s\n", line);
+        
         while (line) {
             lineNum++;
+            printf("DEBUG: Line %d: %s\n", lineNum, line);
+            
             // Skip header lines (first 2 lines)
             if(lineNum > 2) {
                 // Check if this line contains battery data (not "Absent")
                 if(strstr(line, "Absent") == NULL && strstr(line, "Command") == NULL && strstr(line, "pylon") == NULL) {
                     // Check if it starts with a number (battery number)
                     if(line[0] >= '1' && line[0] <= '9') {
+                        int battNum = atoi(line);
                         count++;
+                        printf("DEBUG: Found battery %d\n", battNum);
+                        
+                        // Detect if new model by checking if line has more than 16 fields
+                        // New model has additional columns: B.V.St, B.T.St, MosTempr, M.T.St
+                        int fieldCount = 0;
+                        char *temp = strdup(line);
+                        for(char *p = strtok(temp, " "); p != NULL; p = strtok(NULL, " ")) {
+                            fieldCount++;
+                        }
+                        free(temp);
+                        printf("DEBUG: Battery %d has %d fields\n", battNum, fieldCount);
+                        
+                        // New model has 20+ fields (includes B.V.St, B.T.St, MosTempr, M.T.St)
+                        // Old model has fewer fields (ends at Temp.St or Coulomb)
+                        if(fieldCount >= 20) {
+                            batteryInfo[battNum-1].isNewModel = true;
+                            printf("Battery %d: New model detected\n", battNum);
+                        } else {
+                            batteryInfo[battNum-1].isNewModel = false;
+                            printf("Battery %d: Old model detected\n", battNum);
+                        }
                     }
                 }
             }
@@ -370,13 +472,6 @@ void READBATT::displayCells()
 
 void READBATT::publishBattdata() 
 {
-    if(battnumber == 0)
-        return;
-
-    // for debugging only
-    // displayCells();
-    // return;
-
     // measure the interval and build an average value
     static time_t last_execution_time;
     time_t current_time;
@@ -398,38 +493,32 @@ void READBATT::publishBattdata()
         num_measurements = 0;
     }
 
+    // Publish status info (works even without batteries)
+    json_t *root = json_object();
+    json_object_set_new(root, "Name", json_string("Pylontech Battery Monitor"));
+    json_object_set_new(root, "IP", json_string(myLocalIP.c_str()));
+    json_object_set_new(root, "Interval", json_integer(intervall));
+    json_object_set_new(root, "temperature", json_real(get_cpu_temperature()));
+    json_object_set_new(root, "batteryCount", json_integer(battnumber));
+    
+    char *payload = json_dumps(root, JSON_ENCODE_ANY);
+    if(payload) {
+        std::string topic = getMQTTtopic() + "/values";
+        send_to_mqtt(topic, string(payload));
+        free(payload);
+    }
+    json_decref(root);
+
+    // If no batteries, don't publish cell data
+    if(battnumber == 0)
+        return;
+
     // create json file for local web page
     string batstr_json = convertPylonDataToJson();
     std::ofstream outFile("/var/www/html/wxdata/batteryinfo.json");
     if (!outFile.is_open()) return;
     outFile << batstr_json;
     outFile.close();
-
-    // publish the sensor information
-    json_t *root = json_object();
-
-    // Set key-value pairs in the JSON object
-    json_object_set_new(root, "Name", json_string("Pylontech Battery Monitor"));
-    json_object_set_new(root, "IP", json_string(myLocalIP.c_str()));
-    json_object_set_new(root, "Interval", json_integer(intervall));
-    json_object_set_new(root, "temperature", json_real(get_cpu_temperature()));
-
-    // Serialize JSON object to a string
-    char *payload = json_dumps(root, JSON_ENCODE_ANY);
-    if(!payload) {
-        printf("JSON serialization failed\n");
-        json_decref(root); // Don't forget to free the JSON object
-        return;
-    }
-
-    // Publish the payload using your MQTT client
-    std::string topic = getMQTTtopic() + "/values";
-    // You need to adapt this call to match how your MQTT client library in C/C++ sends messages
-    send_to_mqtt(topic,string(payload));
-    free(payload); // Free the serialized string
-
-    // Cleanup: decrement the reference count of JSON object (frees it if count reaches 0)
-    json_decref(root);
 
     // publish battery current
     for(int battnum = 0; battnum < battnumber; battnum++) {
@@ -490,6 +579,9 @@ void READBATT::publishBattdata()
     sendJson(6, "vstatus");
     sendJson(7, "cstatus");
     sendJson(8, "tstatus");
+    
+    // Publish in Home Assistant format if enabled
+    publishHomeAssistantData();
 }
 
 void READBATT::sendJson(int mode, char *name) 
@@ -550,6 +642,18 @@ string READBATT::convertPylonDataToJson()
         json_object_set_new(pylon, "battery", json_integer(i));
         json_object_set_new(pylon, "current", json_real(cells[i][0].current));
 
+        // Add battery info if available
+        if(batteryInfo[i].isNewModel) {
+            json_object_set_new(pylon, "isNewModel", json_boolean(true));
+            json_object_set_new(pylon, "model", json_string(batteryInfo[i].model));
+            json_object_set_new(pylon, "serial", json_string(batteryInfo[i].serial));
+            json_object_set_new(pylon, "firmware", json_string(batteryInfo[i].firmware));
+            json_object_set_new(pylon, "hwVersion", json_string(batteryInfo[i].hwVersion));
+            json_object_set_new(pylon, "swVersion", json_string(batteryInfo[i].swVersion));
+        } else {
+            json_object_set_new(pylon, "isNewModel", json_boolean(false));
+        }
+
         json_t* voltageArray = json_array();
         json_t* temperatureArray = json_array();
         json_t* SoCArray = json_array();
@@ -580,4 +684,63 @@ string READBATT::convertPylonDataToJson()
     json_decref(root);
 
     return result;
+}
+
+void READBATT::publishHomeAssistantData()
+{
+    if(battnumber == 0) return;
+    
+    // Base topic for all publications
+    std::string baseTopic = "pylontech/monitor";
+    
+    for(int battnum = 0; battnum < battnumber; battnum++) {
+        // Calculate pack voltage (sum of all cells)
+        double packVoltage = 0;
+        double maxVolt = -1;
+        double minVolt = 1000;
+        double avgSoc = 0;
+        
+        for(int cellnum = 0; cellnum < CELLNUMBER; cellnum++) {
+            packVoltage += cells[battnum][cellnum].voltage;
+            avgSoc += cells[battnum][cellnum].soc;
+            if(cells[battnum][cellnum].voltage > maxVolt) maxVolt = cells[battnum][cellnum].voltage;
+            if(cells[battnum][cellnum].voltage < minVolt) minVolt = cells[battnum][cellnum].voltage;
+        }
+        avgSoc /= CELLNUMBER;
+        
+        // Pack voltage
+        char payload[50];
+        snprintf(payload, sizeof(payload), "%.3f", packVoltage);
+        std::string topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/pack_voltage";
+        send_to_mqtt(topic, payload);
+        
+        // Pack current
+        snprintf(payload, sizeof(payload), "%.3f", cells[battnum][0].current);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/pack_current";
+        send_to_mqtt(topic, payload);
+        
+        // State of charge
+        snprintf(payload, sizeof(payload), "%.0f", avgSoc);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/state_of_charge";
+        send_to_mqtt(topic, payload);
+        
+        // Delta V in mV
+        int deltaV = (int)((maxVolt - minVolt) * 1000);
+        snprintf(payload, sizeof(payload), "%d", deltaV);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/delta_v";
+        send_to_mqtt(topic, payload);
+        
+        // Individual cell data
+        for(int cellnum = 0; cellnum < CELLNUMBER; cellnum++) {
+            // Cell voltage
+            snprintf(payload, sizeof(payload), "%.3f", cells[battnum][cellnum].voltage);
+            topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/cell_" + std::to_string(cellnum) + "/voltage";
+            send_to_mqtt(topic, payload);
+            
+            // Cell temperature
+            snprintf(payload, sizeof(payload), "%.1f", cells[battnum][cellnum].temperature);
+            topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/cell_" + std::to_string(cellnum) + "/temperature";
+            send_to_mqtt(topic, payload);
+        }
+    }
 }

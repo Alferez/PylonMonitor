@@ -144,9 +144,15 @@ int idx;
             if(sif)
             {
                 strcpy(devname,sif);    // sif has the valid device name 
-                open_serial(devname,&fd_ser,speed);
-                psd->fd_serial = fd_ser;
-                usleep(1000);
+                if(open_serial(devname,&fd_ser,speed))
+                {
+                    psd->fd_serial = fd_ser;
+                    usleep(1000);
+                }
+                else
+                {
+                    usleep(1000000);    // failed to open, wait a little longer
+                }
             }
             else
                 usleep(1000000);    // device not found, wait a little longer
