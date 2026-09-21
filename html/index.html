@@ -330,6 +330,21 @@
             margin-top: 20px;
         }
 
+        .battery-label.small {
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+        .battery-voltage.small {
+            font-size: 1.1em;
+            margin-top: 2px;
+        }
+
+        .battery-voltage.model-large {
+            font-size: 1.8em;
+            margin-top: 10px;
+        }
+
         .battery-volt-diff {
             font-size: 1.5em;
             font-weight: bold;
@@ -798,32 +813,75 @@
                 
                 // Battery info (for new models)
                 if(battery.isNewModel) {
+                    // Model (large)
                     var infoLabel = document.createElement("div");
                     infoLabel.className = "battery-label";
                     infoLabel.textContent = "Model";
                     var infoValue = document.createElement("div");
-                    infoValue.className = "battery-voltage";
+                    infoValue.className = "battery-voltage model-large";
                     infoValue.textContent = battery.model || "Unknown";
                     iconContainer.appendChild(infoLabel);
                     iconContainer.appendChild(infoValue);
                     
+                    // Serial (small)
                     var serialLabel = document.createElement("div");
-                    serialLabel.className = "battery-label";
+                    serialLabel.className = "battery-label small";
                     serialLabel.textContent = "Serial";
                     var serialValue = document.createElement("div");
-                    serialValue.className = "battery-voltage";
+                    serialValue.className = "battery-voltage small";
                     serialValue.textContent = battery.serial || "Unknown";
                     iconContainer.appendChild(serialLabel);
                     iconContainer.appendChild(serialValue);
                     
+                    // Firmware (small)
                     var fwLabel = document.createElement("div");
-                    fwLabel.className = "battery-label";
+                    fwLabel.className = "battery-label small";
                     fwLabel.textContent = "Firmware";
                     var fwValue = document.createElement("div");
-                    fwValue.className = "battery-voltage";
-                    fwValue.textContent = battery.firmware || "Unknown";
+                    fwValue.className = "battery-voltage small";
+                    fwValue.textContent = battery.mainSoftVersion || "Unknown";
                     iconContainer.appendChild(fwLabel);
                     iconContainer.appendChild(fwValue);
+                    
+                    // Board Version (small)
+                    var boardVerLabel = document.createElement("div");
+                    boardVerLabel.className = "battery-label small";
+                    boardVerLabel.textContent = "Board Version";
+                    var boardVerValue = document.createElement("div");
+                    boardVerValue.className = "battery-voltage small";
+                    boardVerValue.textContent = battery.boardVersion || "Unknown";
+                    iconContainer.appendChild(boardVerLabel);
+                    iconContainer.appendChild(boardVerValue);
+                    
+                    // Soft Version (small)
+                    var softVerLabel = document.createElement("div");
+                    softVerLabel.className = "battery-label small";
+                    softVerLabel.textContent = "Soft Version";
+                    var softVerValue = document.createElement("div");
+                    softVerValue.className = "battery-voltage small";
+                    softVerValue.textContent = battery.softVersion || "Unknown";
+                    iconContainer.appendChild(softVerLabel);
+                    iconContainer.appendChild(softVerValue);
+                    
+                    // Release Date (small)
+                    var relDateLabel = document.createElement("div");
+                    relDateLabel.className = "battery-label small";
+                    relDateLabel.textContent = "Release Date";
+                    var relDateValue = document.createElement("div");
+                    relDateValue.className = "battery-voltage small";
+                    relDateValue.textContent = battery.releaseDate || "Unknown";
+                    iconContainer.appendChild(relDateLabel);
+                    iconContainer.appendChild(relDateValue);
+                    
+                    // Specification (small)
+                    var specLabel = document.createElement("div");
+                    specLabel.className = "battery-label small";
+                    specLabel.textContent = "Specification";
+                    var specValue = document.createElement("div");
+                    specValue.className = "battery-voltage small";
+                    specValue.textContent = battery.specification || "Unknown";
+                    iconContainer.appendChild(specLabel);
+                    iconContainer.appendChild(specValue);
                 } else {
                     var modelLabel = document.createElement("div");
                     modelLabel.className = "battery-label";

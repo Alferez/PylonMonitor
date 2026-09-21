@@ -241,8 +241,6 @@ static bool cycleInProgress = false;
                     // prompt received
                     pylon_rxbuf[rxidx] = 0;   // terminate string
                     bool wasInfoCommand = (strstr(pylon_rxbuf, "info") != NULL);
-                    printf("DEBUG: Received %d bytes for pwr command\n", rxidx);
-                    printf("DEBUG: Buffer content:\n%s\n", pylon_rxbuf);
                     processBatData();
                     // if we just read pwr data, start with battery 1
                     if(strstr(pylon_rxbuf, "pwr") != NULL) {
@@ -323,89 +321,143 @@ void READBATT::processBatData()
     // Check if this is an info command response
     if(strstr(batteryString, "info") != NULL) {
         // Parse info response to get battery details
-        char *line = strtok((char *)batteryString, "\n");
-        int lineNum = 0;
+        // Format is: "Field name        : Value"
+        char *pos = (char *)batteryString;
+        int battNum = 0;
         
-        while (line) {
-            lineNum++;
-            // Skip header lines and find battery data
-            if(lineNum > 2) {
-                // Check if this line contains battery data
-                if(strstr(line, "Absent") == NULL && strstr(line, "Command") == NULL && strstr(line, "pylon") == NULL) {
-                    // Check if it starts with a number (battery number)
-                    if(line[0] >= '1' && line[0] <= '9') {
-                        int battNum = atoi(line);
-                        // Parse the info line
-                        // Format: 1  US3000C  SN123456789  FW1.0.0  HW1.0  SW1.0  ...
-                        char model[50], serial[50], fw[20], hw[20], sw[20];
-                        sscanf(line, "%*d %s %s %s %s %s", model, serial, fw, hw, sw);
-                        
-                        snprintf(batteryInfo[battNum-1].model, sizeof(batteryInfo[battNum-1].model), "%s", model);
-                        snprintf(batteryInfo[battNum-1].serial, sizeof(batteryInfo[battNum-1].serial), "%s", serial);
-                        snprintf(batteryInfo[battNum-1].firmware, sizeof(batteryInfo[battNum-1].firmware), "%s", fw);
-                        snprintf(batteryInfo[battNum-1].hwVersion, sizeof(batteryInfo[battNum-1].hwVersion), "%s", hw);
-                        snprintf(batteryInfo[battNum-1].swVersion, sizeof(batteryInfo[battNum-1].swVersion), "%s", sw);
-                        
-                        printf("Battery %d info: Model=%s, Serial=%s, FW=%s\n", 
-                               battNum, batteryInfo[battNum-1].model, 
-                               batteryInfo[battNum-1].serial, 
-                               batteryInfo[battNum-1].firmware);
-                    }
-                }
-            }
-            line = strtok(NULL, "\n");
+        // Find battery number from the first line (after "info ")
+        char *infoStr = strstr(pos, "info ");
+        if (infoStr) {
+            battNum = atoi(infoStr + 5);
+        } else if (pos[0] >= '1' && pos[0] <= '9') {
+            battNum = atoi(pos);
         }
+        
+        // Helper function to extract value after colon and trim spaces/newlines
+        auto extractValue = [](const char *data, const char *fieldName) -> std::string {
+            const char *field = strstr(data, fieldName);
+            if (!field) return "";
+            
+            // Find the colon after the field name
+            const char *colon = strchr(field, ':');
+            if (!colon) return "";
+            
+            // Skip the colon and spaces
+            const char *value = colon + 1;
+            while (*value == ' ' || *value == '\t') value++;
+            
+            // Extract until newline or end of string
+            std::string result;
+            while (*value && *value != '\n' && *value != '\r') {
+                result += *value;
+                value++;
+            }
+            
+            // Trim trailing spaces
+            while (!result.empty() && (result.back() == ' ' || result.back() == '\t')) {
+                result.pop_back();
+            }
+            
+            return result;
+        };
+        
+        // Extract all fields
+        std::string manufacturer = extractValue(pos, "Manufacturer");
+        std::string model = extractValue(pos, "Device name");
+        std::string boardVersion = extractValue(pos, "Board version");
+        std::string board = extractValue(pos, "Board");
+        std::string mainSoftVersion = extractValue(pos, "Main Soft version");
+        std::string softVersion = extractValue(pos, "Soft  version");
+        std::string bootVersion = extractValue(pos, "Boot  version");
+        std::string commVersion = extractValue(pos, "Comm version");
+        std::string releaseDate = extractValue(pos, "Release Date");
+        std::string serial = extractValue(pos, "Barcode");
+        std::string specification = extractValue(pos, "Specification");
+        std::string cellNumber = extractValue(pos, "Cell Number");
+        std::string maxDischgCurr = extractValue(pos, "Max Dischg Curr");
+        std::string maxChargeCurr = extractValue(pos, "Max Charge Curr");
+        std::string eponPortRate = extractValue(pos, "EPONPort rate");
+        std::string consolePortRate = extractValue(pos, "Console Port rate");
+        
+        // Store the fields
+        if (battNum > 0 && battNum <= 64) {
+            snprintf(batteryInfo[battNum-1].manufacturer, sizeof(batteryInfo[battNum-1].manufacturer), "%s", manufacturer.c_str());
+            snprintf(batteryInfo[battNum-1].model, sizeof(batteryInfo[battNum-1].model), "%s", model.c_str());
+            snprintf(batteryInfo[battNum-1].boardVersion, sizeof(batteryInfo[battNum-1].boardVersion), "%s", boardVersion.c_str());
+            snprintf(batteryInfo[battNum-1].board, sizeof(batteryInfo[battNum-1].board), "%s", board.c_str());
+            snprintf(batteryInfo[battNum-1].mainSoftVersion, sizeof(batteryInfo[battNum-1].mainSoftVersion), "%s", mainSoftVersion.c_str());
+            snprintf(batteryInfo[battNum-1].softVersion, sizeof(batteryInfo[battNum-1].softVersion), "%s", softVersion.c_str());
+            snprintf(batteryInfo[battNum-1].bootVersion, sizeof(batteryInfo[battNum-1].bootVersion), "%s", bootVersion.c_str());
+            snprintf(batteryInfo[battNum-1].commVersion, sizeof(batteryInfo[battNum-1].commVersion), "%s", commVersion.c_str());
+            snprintf(batteryInfo[battNum-1].releaseDate, sizeof(batteryInfo[battNum-1].releaseDate), "%s", releaseDate.c_str());
+            snprintf(batteryInfo[battNum-1].serial, sizeof(batteryInfo[battNum-1].serial), "%s", serial.c_str());
+            snprintf(batteryInfo[battNum-1].specification, sizeof(batteryInfo[battNum-1].specification), "%s", specification.c_str());
+            snprintf(batteryInfo[battNum-1].cellNumber, sizeof(batteryInfo[battNum-1].cellNumber), "%s", cellNumber.c_str());
+            snprintf(batteryInfo[battNum-1].maxDischgCurr, sizeof(batteryInfo[battNum-1].maxDischgCurr), "%s", maxDischgCurr.c_str());
+            snprintf(batteryInfo[battNum-1].maxChargeCurr, sizeof(batteryInfo[battNum-1].maxChargeCurr), "%s", maxChargeCurr.c_str());
+            snprintf(batteryInfo[battNum-1].eponPortRate, sizeof(batteryInfo[battNum-1].eponPortRate), "%s", eponPortRate.c_str());
+            snprintf(batteryInfo[battNum-1].consolePortRate, sizeof(batteryInfo[battNum-1].consolePortRate), "%s", consolePortRate.c_str());
+        }
+        
         return;
     }
 
     // Check if this is a pwr command response
     if(strstr(batteryString, "pwr") != NULL) {
         // Parse pwr response to get battery count and detect new/old model
-        char *line = strtok((char *)batteryString, "\n");
+        // Count lines that have battery data (not "Absent")
         int count = 0;
         int lineNum = 0;
+        char *pos = (char *)batteryString;
         
-        printf("DEBUG: Processing pwr response\n");
-        printf("DEBUG: First line: %s\n", line);
-        
-        while (line) {
-            lineNum++;
-            printf("DEBUG: Line %d: %s\n", lineNum, line);
+        while (*pos) {
+            // Find end of line
+            char *eol = strchr(pos, '\n');
+            if (eol) {
+                *eol = '\0'; // Temporarily null terminate
+            }
             
+            lineNum++;
             // Skip header lines (first 2 lines)
             if(lineNum > 2) {
                 // Check if this line contains battery data (not "Absent")
-                if(strstr(line, "Absent") == NULL && strstr(line, "Command") == NULL && strstr(line, "pylon") == NULL) {
+                if(strstr(pos, "Absent") == NULL && strstr(pos, "Command") == NULL && strstr(pos, "pylon") == NULL) {
                     // Check if it starts with a number (battery number)
-                    if(line[0] >= '1' && line[0] <= '9') {
-                        int battNum = atoi(line);
+                    if(pos[0] >= '1' && pos[0] <= '9') {
+                        int battNum = atoi(pos);
                         count++;
-                        printf("DEBUG: Found battery %d\n", battNum);
                         
-                        // Detect if new model by checking if line has more than 16 fields
-                        // New model has additional columns: B.V.St, B.T.St, MosTempr, M.T.St
-                        int fieldCount = 0;
-                        char *temp = strdup(line);
-                        for(char *p = strtok(temp, " "); p != NULL; p = strtok(NULL, " ")) {
-                            fieldCount++;
+                        // Check if the last field is "-" (old model) or a number/word (new model)
+                        // Remove all spaces and newlines and check the last character
+                        char *noSpaces = strdup(pos);
+                        char *write = noSpaces;
+                        for(char *read = noSpaces; *read; read++) {
+                            if(*read != ' ' && *read != '\t' && *read != '\n' && *read != '\r') {
+                                *write++ = *read;
+                            }
                         }
-                        free(temp);
-                        printf("DEBUG: Battery %d has %d fields\n", battNum, fieldCount);
+                        *write = '\0';
                         
-                        // New model has 20+ fields (includes B.V.St, B.T.St, MosTempr, M.T.St)
-                        // Old model has fewer fields (ends at Temp.St or Coulomb)
-                        if(fieldCount >= 20) {
-                            batteryInfo[battNum-1].isNewModel = true;
-                            printf("Battery %d: New model detected\n", battNum);
-                        } else {
+                        char lastChar = noSpaces[strlen(noSpaces) - 1];
+                        
+                        if (lastChar == '-') {
                             batteryInfo[battNum-1].isNewModel = false;
-                            printf("Battery %d: Old model detected\n", battNum);
+                        } else {
+                            batteryInfo[battNum-1].isNewModel = true;
                         }
+                        free(noSpaces);
                     }
                 }
             }
-            line = strtok(NULL, "\n");
+            
+            if (eol) {
+                *eol = '\n'; // Restore newline
+                pos = eol + 1;
+            } else {
+                break;
+            }
         }
+        
         if(count > 0) {
             battnumber = count;
             printf("Battery count from pwr: %d\n", battnumber);
@@ -645,11 +697,22 @@ string READBATT::convertPylonDataToJson()
         // Add battery info if available
         if(batteryInfo[i].isNewModel) {
             json_object_set_new(pylon, "isNewModel", json_boolean(true));
+            json_object_set_new(pylon, "manufacturer", json_string(batteryInfo[i].manufacturer));
             json_object_set_new(pylon, "model", json_string(batteryInfo[i].model));
+            json_object_set_new(pylon, "boardVersion", json_string(batteryInfo[i].boardVersion));
+            json_object_set_new(pylon, "board", json_string(batteryInfo[i].board));
+            json_object_set_new(pylon, "mainSoftVersion", json_string(batteryInfo[i].mainSoftVersion));
+            json_object_set_new(pylon, "softVersion", json_string(batteryInfo[i].softVersion));
+            json_object_set_new(pylon, "bootVersion", json_string(batteryInfo[i].bootVersion));
+            json_object_set_new(pylon, "commVersion", json_string(batteryInfo[i].commVersion));
+            json_object_set_new(pylon, "releaseDate", json_string(batteryInfo[i].releaseDate));
             json_object_set_new(pylon, "serial", json_string(batteryInfo[i].serial));
-            json_object_set_new(pylon, "firmware", json_string(batteryInfo[i].firmware));
-            json_object_set_new(pylon, "hwVersion", json_string(batteryInfo[i].hwVersion));
-            json_object_set_new(pylon, "swVersion", json_string(batteryInfo[i].swVersion));
+            json_object_set_new(pylon, "specification", json_string(batteryInfo[i].specification));
+            json_object_set_new(pylon, "cellNumber", json_string(batteryInfo[i].cellNumber));
+            json_object_set_new(pylon, "maxDischgCurr", json_string(batteryInfo[i].maxDischgCurr));
+            json_object_set_new(pylon, "maxChargeCurr", json_string(batteryInfo[i].maxChargeCurr));
+            json_object_set_new(pylon, "eponPortRate", json_string(batteryInfo[i].eponPortRate));
+            json_object_set_new(pylon, "consolePortRate", json_string(batteryInfo[i].consolePortRate));
         } else {
             json_object_set_new(pylon, "isNewModel", json_boolean(false));
         }

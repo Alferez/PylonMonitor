@@ -25,11 +25,22 @@ typedef struct {
 
 typedef struct {
     bool isNewModel;
+    char manufacturer[50];
     char model[50];
+    char boardVersion[50];
+    char board[50];
+    char mainSoftVersion[50];
+    char softVersion[50];
+    char bootVersion[50];
+    char commVersion[50];
+    char releaseDate[50];
     char serial[50];
-    char firmware[20];
-    char hwVersion[20];
-    char swVersion[20];
+    char specification[50];
+    char cellNumber[50];
+    char maxDischgCurr[50];
+    char maxChargeCurr[50];
+    char eponPortRate[50];
+    char consolePortRate[50];
 } BatteryInfo;
 
 
