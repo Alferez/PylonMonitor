@@ -1,0 +1,38 @@
+#!/bin/bash
+
+RUTA=$(pwd)
+DAEMON='pylonmonitor'
+WEBPATH='/var/www/html'
+
+if [ !-f $RUTA/$DAEMON ]
+then
+	echo "Before you need execute:"
+	echo "	./ prepare"
+	echo "   make"
+	exit 1
+fi
+
+if [ "$(whoami)"  != "root" ]
+then
+	echo "You need exec with sudo."
+	echo "sudo $0"
+	exit 1
+fi
+
+cp $RUTA/html $WEBPATH/
+mkdir -p $WEBPATH/wxdata
+chmod 777 $WEBPATH/wxdata
+
+cp $RUTA/autostart.txt /etc/systemd/system/pylonmonitor.service
+sed -i "s|RUTAEXEC|$RUTA/$DAEMON|g" /etc/systemd/system/pylonmonitor.service
+sed -i "s|RUTA|$RUTA|g" /etc/systemd/system/pylonmonitor.service
+
+
+
+systemctl daemon-reload
+systemctl enable pylonmonitor.service
+systemctl start pylonmonitor.service
+
+systemctl status pylonmonitor.service
+
+

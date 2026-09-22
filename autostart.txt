@@ -1,9 +1,3 @@
-Step required to automatically run this program after reboot:
-
-        sudo nano /etc/systemd/system/pylonmonitor.service
-
-add this content:
-
 [Unit]
 Description=pylonmonitor Service
 Wants=network-online.target
@@ -11,21 +5,11 @@ After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/kurt/pylonmon_RPI
-ExecStart=/home/kurt/pylonmon_RPI/pylonmonitor
+WorkingDirectory=RUTA
+ExecStart=RUTAEXEC
 User=root
 StandardOutput=null
 StandardError=null
 
 [Install]
 WantedBy=multi-user.target
-
-enable and start the service:
-
-        sudo systemctl daemon-reload
-        sudo systemctl enable pylonmonitor.service
-        sudo systemctl start pylonmonitor.service
-
-check (also after reboot) that the service is running:
-
-        sudo systemctl status pylonmonitor.service
