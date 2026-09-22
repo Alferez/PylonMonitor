@@ -882,6 +882,16 @@
                     specValue.textContent = battery.specification || "Unknown";
                     iconContainer.appendChild(specLabel);
                     iconContainer.appendChild(specValue);
+                    
+                    // Cycle Count (small)
+                    var cycleLabel = document.createElement("div");
+                    cycleLabel.className = "battery-label small";
+                    cycleLabel.textContent = "Cycle Count";
+                    var cycleValue = document.createElement("div");
+                    cycleValue.className = "battery-voltage small";
+                    cycleValue.textContent = battery.cycleCount || "Unknown";
+                    iconContainer.appendChild(cycleLabel);
+                    iconContainer.appendChild(cycleValue);
                 } else {
                     var modelLabel = document.createElement("div");
                     modelLabel.className = "battery-label";

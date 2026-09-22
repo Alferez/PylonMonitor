@@ -21,7 +21,7 @@ string locationTopic = "PylonMonitor";
 string deviceTopic = "battery";
 string serialPort = "/dev/ttyAMA0";
 bool homeAssistantMode = false;
-string homeAssistantPrefix = "battery";
+string homeAssistantPrefix = "pylontech";
 
 bool mqtt_changed = false;
 int pollInterval = 15;

@@ -41,6 +41,7 @@ typedef struct {
     char maxChargeCurr[50];
     char eponPortRate[50];
     char consolePortRate[50];
+    int cycleCount;
 } BatteryInfo;
 
 
@@ -69,6 +70,7 @@ private:
         PYLON_REQUEST,  // request data from the next battery number (beginning at 1)
         PYLON_READ,     // read data from the battery
         PYLON_INFO,     // read info from the battery (new models only)
+        PYLON_STAT,     // read stat from the battery (new models only, for cycle count)
     };
 
     int pylonState = PYLON_SEARCH;      // state machine's actual state

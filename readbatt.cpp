@@ -51,6 +51,28 @@ extern int batteryCapacity[16];
 
 READBATT::READBATT()
 {
+    // Initialize batteryInfo array
+    for(int i = 0; i < MAXBATTNUMBER; i++) {
+        batteryInfo[i].isNewModel = false;
+        batteryInfo[i].cycleCount = 0;
+        memset(batteryInfo[i].manufacturer, 0, sizeof(batteryInfo[i].manufacturer));
+        memset(batteryInfo[i].model, 0, sizeof(batteryInfo[i].model));
+        memset(batteryInfo[i].boardVersion, 0, sizeof(batteryInfo[i].boardVersion));
+        memset(batteryInfo[i].board, 0, sizeof(batteryInfo[i].board));
+        memset(batteryInfo[i].mainSoftVersion, 0, sizeof(batteryInfo[i].mainSoftVersion));
+        memset(batteryInfo[i].softVersion, 0, sizeof(batteryInfo[i].softVersion));
+        memset(batteryInfo[i].bootVersion, 0, sizeof(batteryInfo[i].bootVersion));
+        memset(batteryInfo[i].commVersion, 0, sizeof(batteryInfo[i].commVersion));
+        memset(batteryInfo[i].releaseDate, 0, sizeof(batteryInfo[i].releaseDate));
+        memset(batteryInfo[i].serial, 0, sizeof(batteryInfo[i].serial));
+        memset(batteryInfo[i].specification, 0, sizeof(batteryInfo[i].specification));
+        memset(batteryInfo[i].cellNumber, 0, sizeof(batteryInfo[i].cellNumber));
+        memset(batteryInfo[i].maxDischgCurr, 0, sizeof(batteryInfo[i].maxDischgCurr));
+        memset(batteryInfo[i].maxChargeCurr, 0, sizeof(batteryInfo[i].maxChargeCurr));
+        memset(batteryInfo[i].eponPortRate, 0, sizeof(batteryInfo[i].eponPortRate));
+        memset(batteryInfo[i].consolePortRate, 0, sizeof(batteryInfo[i].consolePortRate));
+    }
+
     // initialize and open the RPI's internal serial interface
     // this uses the primary serial interface on the RPI board
     // take care of the comments in pylonmonitor.cpp: remapping of serial port
@@ -206,6 +228,29 @@ static bool cycleInProgress = false;
         return;
     }
 
+    if(pylonState == PYLON_STAT) {
+        // Request stat from new model batteries to get cycle count
+        acttime++;
+        if((acttime - lasttime) < 20) {
+            usleep(100000);
+            return;
+        }
+        lasttime = acttime;
+        printf("req stat %d\n", battnum);
+        if(write_serial_free() == -1) {
+            printf("write buffer full, restarting search\n");
+            acttime = 0;
+            lasttime = 0;
+            pylonState = PYLON_SEARCH;
+            return;
+        }
+        serial_printf("stat %d\n", battnum);
+        timeout = 0;
+        rxidx = 0;
+        pylonState = PYLON_READ;
+        return;
+    }
+
     if(pylonState == PYLON_READ) {
         // read the response from the battery
         // read all bytes until the prompt is received
@@ -241,13 +286,25 @@ static bool cycleInProgress = false;
                     // prompt received
                     pylon_rxbuf[rxidx] = 0;   // terminate string
                     bool wasInfoCommand = (strstr(pylon_rxbuf, "info") != NULL);
+                    bool wasStatCommand = (strstr(pylon_rxbuf, "stat") != NULL);
                     processBatData();
                     // if we just read pwr data, start with battery 1
                     if(strstr(pylon_rxbuf, "pwr") != NULL) {
                         battnum = 1;
-                    } else if(wasInfoCommand) {
-                        // Just read info, go to next battery
+                    } else if(wasStatCommand) {
+                        // Just read stat, go to next battery
                         if(++battnum > 64) battnum = 1;
+                    } else if(wasInfoCommand) {
+                        // Just read info, check if we need to request stat for this battery
+                        // New models have isNewModel = true
+                        if(battnum <= battnumber && batteryInfo[battnum-1].isNewModel) {
+                            // Request stat for new model battery to get cycle count
+                            pylonState = PYLON_STAT;
+                            return;
+                        } else {
+                            // go to next battery
+                            if(++battnum > 64) battnum = 1;
+                        }
                     } else {
                         // Just read bat data, check if we need to request info for this battery
                         // New models have isNewModel = true
@@ -318,6 +375,57 @@ void READBATT::processBatData()
 
 
 
+    // Check if this is a stat command response
+    if(strstr(batteryString, "stat") != NULL) {
+        // Parse stat response to get cycle count
+        char *pos = (char *)batteryString;
+        int battNum = 0;
+        
+        // Find battery number from the first line (after "stat ")
+        char *statStr = strstr(pos, "stat ");
+        if (statStr) {
+            battNum = atoi(statStr + 5);
+        } else if (pos[0] >= '1' && pos[0] <= '9') {
+            battNum = atoi(pos);
+        }
+        
+        // Helper function to extract value after colon and trim spaces/newlines
+        auto extractValue = [](const char *data, const char *fieldName) -> std::string {
+            const char *field = strstr(data, fieldName);
+            if (!field) return "";
+            
+            // Find the colon after the field name
+            const char *colon = strchr(field, ':');
+            if (!colon) return "";
+            
+            // Skip the colon and spaces
+            const char *value = colon + 1;
+            while (*value == ' ' || *value == '\t') value++;
+            
+            // Extract until newline or end of string
+            std::string result;
+            while (*value && *value != '\n' && *value != '\r') {
+                result += *value;
+                value++;
+            }
+            
+            // Trim trailing spaces
+            while (!result.empty() && (result.back() == ' ' || result.back() == '\t')) {
+                result.pop_back();
+            }
+            
+            return result;
+        };
+        
+        // Extract cycle count
+        std::string cycleStr = extractValue(pos, "CYCLE Times");
+        if (battNum > 0 && battNum <= 64) {
+            batteryInfo[battNum-1].cycleCount = atoi(cycleStr.c_str());
+        }
+        
+        return;
+    }
+
     // Check if this is an info command response
     if(strstr(batteryString, "info") != NULL) {
         // Parse info response to get battery details
@@ -367,7 +475,7 @@ void READBATT::processBatData()
         std::string boardVersion = extractValue(pos, "Board version");
         std::string board = extractValue(pos, "Board");
         std::string mainSoftVersion = extractValue(pos, "Main Soft version");
-        std::string softVersion = extractValue(pos, "Soft  version");
+        std::string softVersion = extractValue(pos, "Soft version");
         std::string bootVersion = extractValue(pos, "Boot  version");
         std::string commVersion = extractValue(pos, "Comm version");
         std::string releaseDate = extractValue(pos, "Release Date");
@@ -713,6 +821,7 @@ string READBATT::convertPylonDataToJson()
             json_object_set_new(pylon, "maxChargeCurr", json_string(batteryInfo[i].maxChargeCurr));
             json_object_set_new(pylon, "eponPortRate", json_string(batteryInfo[i].eponPortRate));
             json_object_set_new(pylon, "consolePortRate", json_string(batteryInfo[i].consolePortRate));
+            json_object_set_new(pylon, "cycleCount", json_integer(batteryInfo[i].cycleCount));
         } else {
             json_object_set_new(pylon, "isNewModel", json_boolean(false));
         }
@@ -753,8 +862,11 @@ void READBATT::publishHomeAssistantData()
 {
     if(battnumber == 0) return;
     
+    // Check if Home Assistant mode is enabled
+    if(!homeAssistantMode) return;
+    
     // Base topic for all publications
-    std::string baseTopic = "pylontech/monitor";
+    std::string baseTopic = homeAssistantPrefix;
     
     for(int battnum = 0; battnum < battnumber; battnum++) {
         // Calculate pack voltage (sum of all cells)
@@ -791,6 +903,86 @@ void READBATT::publishHomeAssistantData()
         int deltaV = (int)((maxVolt - minVolt) * 1000);
         snprintf(payload, sizeof(payload), "%d", deltaV);
         topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/delta_v";
+        send_to_mqtt(topic, payload);
+        
+        // Additional publications for Home Assistant
+        // Highest cell voltage
+        snprintf(payload, sizeof(payload), "%.3f", maxVolt);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/highest_cell_voltage";
+        send_to_mqtt(topic, payload);
+        
+        // Lowest cell voltage
+        snprintf(payload, sizeof(payload), "%.3f", minVolt);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/lowest_cell_voltage";
+        send_to_mqtt(topic, payload);
+        
+        // Average temperature
+        double avgTemp = 0;
+        for(int cellnum = 0; cellnum < CELLNUMBER; cellnum++) {
+            avgTemp += cells[battnum][cellnum].temperature;
+        }
+        avgTemp /= CELLNUMBER;
+        snprintf(payload, sizeof(payload), "%.1f", avgTemp);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/average_temperature";
+        send_to_mqtt(topic, payload);
+        
+        // Remaining capacity (estimated based on SoC) - in Ah
+        double remainingCapacity = batteryCapacity[battnum] * (avgSoc / 100.0);
+        snprintf(payload, sizeof(payload), "%.1f", remainingCapacity);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/remaining_capacity";
+        send_to_mqtt(topic, payload);
+        
+        // Total capacity - in Ah
+        snprintf(payload, sizeof(payload), "%d", batteryCapacity[battnum]);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/total_capacity";
+        send_to_mqtt(topic, payload);
+        
+        // Power (Voltage * Current)
+        double power = packVoltage * cells[battnum][0].current;
+        snprintf(payload, sizeof(payload), "%.3f", power);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/power";
+        send_to_mqtt(topic, payload);
+        
+        // Cycle count (only for new models)
+        if(battnum < battnumber && batteryInfo[battnum].isNewModel) {
+            snprintf(payload, sizeof(payload), "%d", batteryInfo[battnum].cycleCount);
+            topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/cycle_count";
+            send_to_mqtt(topic, payload);
+        }
+        
+        // Temperature groups (average of cells 1-4, 5-8, 9-12, 13-15)
+        double tempGroup1 = 0, tempGroup2 = 0, tempGroup3 = 0, tempGroup4 = 0;
+        for(int i = 0; i < 4; i++) {
+            tempGroup1 += cells[battnum][i].temperature;
+        }
+        for(int i = 4; i < 8; i++) {
+            tempGroup2 += cells[battnum][i].temperature;
+        }
+        for(int i = 8; i < 12; i++) {
+            tempGroup3 += cells[battnum][i].temperature;
+        }
+        for(int i = 12; i < 15; i++) {
+            tempGroup4 += cells[battnum][i].temperature;
+        }
+        tempGroup1 /= 4;
+        tempGroup2 /= 4;
+        tempGroup3 /= 4;
+        tempGroup4 /= 3;
+        
+        snprintf(payload, sizeof(payload), "%.1f", tempGroup1);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/temp_cells_1_4";
+        send_to_mqtt(topic, payload);
+        
+        snprintf(payload, sizeof(payload), "%.1f", tempGroup2);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/temp_cells_5_8";
+        send_to_mqtt(topic, payload);
+        
+        snprintf(payload, sizeof(payload), "%.1f", tempGroup3);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/temp_cells_9_12";
+        send_to_mqtt(topic, payload);
+        
+        snprintf(payload, sizeof(payload), "%.1f", tempGroup4);
+        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/temp_cells_13_15";
         send_to_mqtt(topic, payload);
         
         // Individual cell data

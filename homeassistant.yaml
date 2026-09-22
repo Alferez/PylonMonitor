@@ -1,213 +1,460 @@
-# Configuración para Home Assistant - Pylontech Battery Monitor
-# Copia este contenido a tu configuration.yaml o a un archivo separado
+# ==========================================
+# PYLONTECH PACK 1 - CONFIGURACIÓN MQTT
+# ==========================================
 
-# For Different Batteries
-# replace "Battery 1" to "Battery X" and "battery_pack_1" to "battery_pack_X" 
-
-
-  - name: "Battery 1 Pack Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_pack_voltage"
+  # --- Pack General ---
+  - name: "Pack 1 Pack Voltage"
+    unique_id: pylontech_pack_1_pack_voltage
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_pack_voltage
+    state_topic: "pylontech/monitor/pack_1/pack_voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery-high
+    device:
+      identifiers:
+        - "pylontech_pack_1"
+      name: "Pylontech Battery 1 Bank "
+      manufacturer: "Pylontech"
+      model: "Pylontech Battery"
 
-  - name: "Battery 1 Pack Current"
-    state_topic: "pylontech/monitor/battery_pack_1_pack_current"
+  - name: "Pack 1 Pack Current"
+    unique_id: pylontech_pack_1_pack_current
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_pack_current
+    state_topic: "pylontech/monitor/pack_1/pack_current"
     unit_of_measurement: "A"
     device_class: current
     icon: mdi:current-dc
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 State of Charge"
-    state_topic: "pylontech/monitor/battery_pack_1_state_of_charge"
+  - name: "Pack 1 State of Charge"
+    unique_id: pylontech_pack_1_pack_state_of_charge
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_state_of_charge
+    state_topic: "pylontech/monitor/pack_1/state_of_charge"
     unit_of_measurement: "%"
     device_class: battery
     icon: mdi:battery-100
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Delta V"
-    state_topic: "pylontech/monitor/battery_pack_1_delta_v"
+  - name: "Pack 1 Delta V"
+    unique_id: pylontech_pack_1_pack_delta_v
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_deltaV
+    state_topic: "pylontech/monitor/pack_1/delta_v"
     unit_of_measurement: "mV"
     icon: mdi:battery-alert
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-    # Cell Voltage 
+  - name: "Pack 1 Pack Power"
+    unique_id: pylontech_pack_1_power
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_power
+    state_topic: "pylontech/monitor/pack_1/power"
+    unit_of_measurement: "W"
+    device_class: power
+    icon: mdi:sine-wave
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 0 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_0_voltage"
+  - name: "Pack 1 Pack Cycles"
+    unique_id: pylontech_pack_1_cycles
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cycles
+    state_topic: "pylontech/monitor/pack_1/cycles_count"
+    icon: mdi:rotate-counterclockwise
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  - name: "Pack 1 Pack Highest Cell Voltage"
+    unique_id: pylontech_pack_1_highest_cell_voltage
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_highest_cell_voltage
+    state_topic: "pylontech/monitor/pack_1/highest_cell_voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 1 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_1_voltage"
+  - name: "Pack 1 Pack Lowestt Cell Voltage"
+    unique_id: pylontech_pack_1_lowest_cell_voltage
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_lowest_cell_voltage
+    state_topic: "pylontech/monitor/pack_1/lowest_cell_voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 2 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_2_voltage"
+  - name: "Pack 1 Average Temperatura"
+    unique_id: pylontech_pack_1_average_temperature
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_average_temperature
+    state_topic: "pylontech/monitor/pack_1/average_temperature"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  - name: "Pack 1 Pack Remaining Capacity"
+    unique_id: pylontech_pack_1_pack_remaining_capacity
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_remaining_capacity
+    state_topic: "pylontech/monitor/pack_1/remaining_capacity"
+    unit_of_measurement: "Ah"
+    icon: mdi:current-dc
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+
+  - name: "Pack 1 Pack Total Capacity"
+    unique_id: pylontech_pack_1_pack_total_capacity
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_total_capacity
+    state_topic: "pylontech/monitor/pack_1/total_capacity"
+    unit_of_measurement: "Ah"
+    icon: mdi:current-dc
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  # --- Cell Voltage (Celdas 0 a 14) ---
+
+  - name: "Pack 1 Cell 0 Voltage"
+    unique_id: pylontech_pack_1_cell_0_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_0_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_0/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 3 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_3_voltage"
+  - name: "Pack 1 Cell 1 Voltage"
+    unique_id: pylontech_pack_1_cell_1_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_1_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_1/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 4 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_4_voltage"
+  - name: "Pack 1 Cell 2 Voltage"
+    unique_id: pylontech_pack_1_cell_2_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_2_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_2/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 5 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_5_voltage"
+  - name: "Pack 1 Cell 3 Voltage"
+    unique_id: pylontech_pack_1_cell_3_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_3_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_3/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 6 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_6_voltage"
+  - name: "Pack 1 Cell 4 Voltage"
+    unique_id: pylontech_pack_1_cell_4_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_4_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_4/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 7 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_7_voltage"
+  - name: "Pack 1 Cell 5 Voltage"
+    unique_id: pylontech_pack_1_cell_5_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_5_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_5/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 8 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_8_voltage"
+  - name: "Pack 1 Cell 6 Voltage"
+    unique_id: pylontech_pack_1_cell_6_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_6_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_6/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 9 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_9_voltage"
+  - name: "Pack 1 Cell 7 Voltage"
+    unique_id: pylontech_pack_1_cell_7_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_7_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_7/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 10 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_10_voltage"
+  - name: "Pack 1 Cell 8 Voltage"
+    unique_id: pylontech_pack_1_cell_8_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_8_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_8/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 11 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_11_voltage"
+  - name: "Pack 1 Cell 9 Voltage"
+    unique_id: pylontech_pack_1_cell_9_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_9_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_9/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 12 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_12_voltage"
+  - name: "Pack 1 Cell 10 Voltage"
+    unique_id: pylontech_pack_1_cell_10_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_10_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_10/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 13 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_13_voltage"
+  - name: "Pack 1 Cell 11 Voltage"
+    unique_id: pylontech_pack_1_cell_11_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_11_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_11/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 14 Voltage"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_14_voltage"
+  - name: "Pack 1 Cell 12 Voltage"
+    unique_id: pylontech_pack_1_cell_12_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_12_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_12/voltage"
     unit_of_measurement: "V"
     device_class: voltage
     icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  # Temperaturas (ejemplo: celdas 0-2)
+  - name: "Pack 1 Cell 13 Voltage"
+    unique_id: pylontech_pack_1_cell_13_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_13_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_13/voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 0 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_0_temperature"
+  - name: "Pack 1 Cell 14 Voltage"
+    unique_id: pylontech_pack_1_cell_14_volt
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_14_voltage
+    state_topic: "pylontech/monitor/pack_1/cell_14/voltage"
+    unit_of_measurement: "V"
+    device_class: voltage
+    icon: mdi:battery
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+
+  # --- Temperaturas (Celdas 0 a 14) ---
+
+  - name: "Pack 1 Cell 0 Temperature"
+    unique_id: pylontech_pack_1_cell_0_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_0_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_0/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 1 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_1_temperature"
+  - name: "Pack 1 Cell 1 Temperature"
+    unique_id: pylontech_pack_1_cell_1_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_1_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_1/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 2 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_2_temperature"
+  - name: "Pack 1 Cell 2 Temperature"
+    unique_id: pylontech_pack_1_cell_2_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_2_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_2/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 3 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_3_temperature"
+  - name: "Pack 1 Cell 3 Temperature"
+    unique_id: pylontech_pack_1_cell_3_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_3_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_3/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 4 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_4_temperature"
+  - name: "Pack 1 Cell 4 Temperature"
+    unique_id: pylontech_pack_1_cell_4_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_4_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_4/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 5 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_5_temperature"
+  - name: "Pack 1 Cell 5 Temperature"
+    unique_id: pylontech_pack_1_cell_5_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_5_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_5/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 6 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_6_temperature"
+  - name: "Pack 1 Cell 6 Temperature"
+    unique_id: pylontech_pack_1_cell_6_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_6_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_6/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 7 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_7_temperature"
+  - name: "Pack 1 Cell 7 Temperature"
+    unique_id: pylontech_pack_1_cell_7_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_7_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_7/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 8 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_8_temperature"
+  - name: "Pack 1 Cell 8 Temperature"
+    unique_id: pylontech_pack_1_cell_8_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_8_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_8/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 9 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_9_temperature"
+  - name: "Pack 1 Cell 9 Temperature"
+    unique_id: pylontech_pack_1_cell_9_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_9_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_9/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 10 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_10_temperature"
+  - name: "Pack 1 Cell 10 Temperature"
+    unique_id: pylontech_pack_1_cell_10_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_10_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_10/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 11 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_11_temperature"
+  - name: "Pack 1 Cell 11 Temperature"
+    unique_id: pylontech_pack_1_cell_11_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_11_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_11/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 12 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_12_temperature"
+  - name: "Pack 1 Cell 12 Temperature"
+    unique_id: pylontech_pack_1_cell_12_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_12_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_12/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 13 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_13_temperature"
+  - name: "Pack 1 Cell 13 Temperature"
+    unique_id: pylontech_pack_1_cell_13_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_13_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_13/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
 
-  - name: "Battery 1 Cell 14 Temperature"
-    state_topic: "pylontech/monitor/battery_pack_1_cell_14_temperature"
+  - name: "Pack 1 Cell 14 Temperature"
+    unique_id: pylontech_pack_1_cell_14_temp
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_cell_14_temperature
+    state_topic: "pylontech/monitor/pack_1/cell_14/temperature"
     unit_of_measurement: "°C"
     device_class: temperature
     icon: mdi:thermometer
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+
+  - name: "Pack 1 Temperature Cells 1 4"
+    unique_id: pylontech_pack_1_temp_cells_1_4
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_temperature_cells_1_4
+    state_topic: "pylontech/monitor/pack_1/temp_cells_1_4"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer-auto
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  - name: "Pack 1 Temperature Cells 5 8"
+    unique_id: pylontech_pack_1_temp_cells_5_8
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_temperature_cells_5_8
+    state_topic: "pylontech/monitor/pack_1/temp_cells_5_8"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer-auto
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  - name: "Pack 1 Temperature Cells 9 12"
+    unique_id: pylontech_pack_1_temp_cells_9_12
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_temperature_cells_9_12
+    state_topic: "pylontech/monitor/pack_1/temp_cells_9_12"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer-auto
+    device:
+      identifiers: ["pylontech_pack_1"]
+
+  - name: "Pack 1 Temperature Cells 13 16"
+    unique_id: pylontech_pack_1_temp_cells_13_16
+    default_entity_id: sensor.pylontech_battery_bank_pack_1_temperature_cells_13_16
+    state_topic: "pylontech/monitor/pack_1/temp_cells_13_15"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    icon: mdi:thermometer-auto
+    device:
+      identifiers: ["pylontech_pack_1"]
