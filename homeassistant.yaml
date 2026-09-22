@@ -1,6 +1,15 @@
 # ==========================================
-# PYLONTECH PACK 1 - CONFIGURACIÓN MQTT
+# PYLONTECH PACK 1 - INCLUDE SETUP MQTT FILE
 # ==========================================
+
+#### For add new battery pack:
+#### Copy this Include file and
+#### Replace:
+#      pack_1 -> pack_2
+#      Battery 1 -> Battery 2
+#      Pack 1 -> Pack 2
+
+
 
   # --- Pack General ---
   - name: "Pack 1 Pack Voltage"
