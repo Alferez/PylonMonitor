@@ -6,7 +6,7 @@
 using string = std::string;
 
 #define MAXRXBUFLEN 16384
-#define MAXBATTNUMBER   (64+1)  // +1 because the first batt has No 1 (not 0)
+#define MAXBATTNUMBER   (16+1)  // +1 because the first batt has No 1 (not 0)
 #define CELLNUMBER      15      // number of cells per battery
 
 typedef struct {
@@ -55,6 +55,7 @@ private:
     void serial_printf(const char *format, ...);
     void batteryhandler_thread();
     void loop_pylon();
+    void setBatterySpecs(int battNum, const char* model);
     string shrink(char *text);
     void processBatData();
     void publishBattdata();

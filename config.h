@@ -2,9 +2,6 @@
 
 using std::string;
 
-#define DJ0ABR
-//#define DL1EV
-
 bool saveDefaultConfigToJson();
 bool readConfigFromJson();
 string getMQTTtopic();

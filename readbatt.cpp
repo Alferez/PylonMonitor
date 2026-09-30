@@ -293,7 +293,7 @@ static bool cycleInProgress = false;
                         battnum = 1;
                     } else if(wasStatCommand) {
                         // Just read stat, go to next battery
-                        if(++battnum > 64) battnum = 1;
+                        if(++battnum > MAXBATTNUMBER) battnum = 1;
                     } else if(wasInfoCommand) {
                         // Just read info, check if we need to request stat for this battery
                         // New models have isNewModel = true
@@ -303,7 +303,7 @@ static bool cycleInProgress = false;
                             return;
                         } else {
                             // go to next battery
-                            if(++battnum > 64) battnum = 1;
+                            if(++battnum > MAXBATTNUMBER) battnum = 1;
                         }
                     } else {
                         // Just read bat data, check if we need to request info for this battery
@@ -313,8 +313,8 @@ static bool cycleInProgress = false;
                             pylonState = PYLON_INFO;
                             return;
                         } else {
-                            // go to the next battery (never read more than 64 batteries)
-                            if(++battnum > 64) battnum = 1;
+                            // go to the next battery (never read more than MAXBATTNUMBER batteries)
+                            if(++battnum > MAXBATTNUMBER) battnum = 1;
                         }
                     }
                     acttime = 0;
@@ -344,6 +344,30 @@ static bool cycleInProgress = false;
             }
         }
         return;
+    }
+}
+
+// Set battery energy and capacity based on detected model
+// All Pylontech are 15S, 48V
+void READBATT::setBatterySpecs(int battNum, const char* model) {
+    if (battNum <= 0 || battNum > MAXBATTNUMBER) return;
+    
+    string m = model;
+    
+    if (m.find("US5000") != string::npos) {
+        batteryEnergy[battNum-1] = 4800;  // Wh (nominal)
+        batteryCapacity[battNum-1] = 100; // Ah
+        printf("Battery %d: US5000C detected (4800 Wh, 100 Ah)\n", battNum);
+    } else if (m.find("US3000") != string::npos) {
+        batteryEnergy[battNum-1] = 3552;  // Wh (nominal)
+        batteryCapacity[battNum-1] = 74;  // Ah
+        printf("Battery %d: US3000/C detected (3552 Wh, 74 Ah)\n", battNum);
+    } else if (m.find("US2000") != string::npos) {
+        batteryEnergy[battNum-1] = 2400;  // Wh (nominal)
+        batteryCapacity[battNum-1] = 50;  // Ah
+        printf("Battery %d: US2000/C detected (2400 Wh, 50 Ah)\n", battNum);
+    } else {
+        printf("Battery %d: Unknown model '%s', energy/capacity not set\n", battNum, model);
     }
 }
 
@@ -419,7 +443,7 @@ void READBATT::processBatData()
         
         // Extract cycle count
         std::string cycleStr = extractValue(pos, "CYCLE Times");
-        if (battNum > 0 && battNum <= 64) {
+        if (battNum > 0 && battNum <= MAXBATTNUMBER) {
             batteryInfo[battNum-1].cycleCount = atoi(cycleStr.c_str());
         }
         
@@ -488,9 +512,10 @@ void READBATT::processBatData()
         std::string consolePortRate = extractValue(pos, "Console Port rate");
         
         // Store the fields
-        if (battNum > 0 && battNum <= 64) {
+        if (battNum > 0 && battNum <= MAXBATTNUMBER) {
             snprintf(batteryInfo[battNum-1].manufacturer, sizeof(batteryInfo[battNum-1].manufacturer), "%s", manufacturer.c_str());
             snprintf(batteryInfo[battNum-1].model, sizeof(batteryInfo[battNum-1].model), "%s", model.c_str());
+            setBatterySpecs(battNum, model.c_str());
             snprintf(batteryInfo[battNum-1].boardVersion, sizeof(batteryInfo[battNum-1].boardVersion), "%s", boardVersion.c_str());
             snprintf(batteryInfo[battNum-1].board, sizeof(batteryInfo[battNum-1].board), "%s", board.c_str());
             snprintf(batteryInfo[battNum-1].mainSoftVersion, sizeof(batteryInfo[battNum-1].mainSoftVersion), "%s", mainSoftVersion.c_str());
@@ -698,9 +723,11 @@ void READBATT::publishBattdata()
         json_decref(root);
     }
 
-    // publish battery info
+    // publish battery info (only if model detected)
     for(int battnum = 0; battnum < battnumber; battnum++)
     {
+        if(batteryCapacity[battnum] <= 0) continue;  // Skip if model not detected
+
         json_t *root = json_object();
 
         json_object_set_new(root, "energy",
@@ -927,15 +954,17 @@ void READBATT::publishHomeAssistantData()
         send_to_mqtt(topic, payload);
         
         // Remaining capacity (estimated based on SoC) - in Ah
-        double remainingCapacity = batteryCapacity[battnum] * (avgSoc / 100.0);
-        snprintf(payload, sizeof(payload), "%.1f", remainingCapacity);
-        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/remaining_capacity";
-        send_to_mqtt(topic, payload);
-        
-        // Total capacity - in Ah
-        snprintf(payload, sizeof(payload), "%d", batteryCapacity[battnum]);
-        topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/total_capacity";
-        send_to_mqtt(topic, payload);
+        if(batteryCapacity[battnum] > 0) {
+            double remainingCapacity = batteryCapacity[battnum] * (avgSoc / 100.0);
+            snprintf(payload, sizeof(payload), "%.1f", remainingCapacity);
+            topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/remaining_capacity";
+            send_to_mqtt(topic, payload);
+            
+            // Total capacity - in Ah
+            snprintf(payload, sizeof(payload), "%d", batteryCapacity[battnum]);
+            topic = baseTopic + "/pack_" + std::to_string(battnum+1) + "/total_capacity";
+            send_to_mqtt(topic, payload);
+        }
         
         // Power (Voltage * Current)
         double power = packVoltage * cells[battnum][0].current;
