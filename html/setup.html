@@ -110,6 +110,26 @@
         margin-top: 5px;
     }
 
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #00d2ff;
+    }
+
+    .checkbox-row label {
+        margin-bottom: 0;
+        cursor: pointer;
+        color: #fff;
+        font-size: 1em;
+    }
+
     .btn-group {
         display: flex;
         gap: 15px;
@@ -244,8 +264,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="port2Enabled">Enable Port 2</label>
-                        <input type="checkbox" id="port2Enabled" name="port2Enabled">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="port2Enabled" name="port2Enabled">
+                            <label for="port2Enabled">Enable Port 2</label>
+                        </div>
                         <div class="hint">Enable a second serial port for additional batteries</div>
                     </div>
 
@@ -256,8 +278,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="port3Enabled">Enable Port 3</label>
-                        <input type="checkbox" id="port3Enabled" name="port3Enabled">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="port3Enabled" name="port3Enabled">
+                            <label for="port3Enabled">Enable Port 3</label>
+                        </div>
                         <div class="hint">Enable a third serial port for additional batteries</div>
                     </div>
 
@@ -268,8 +292,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="port4Enabled">Enable Port 4</label>
-                        <input type="checkbox" id="port4Enabled" name="port4Enabled">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="port4Enabled" name="port4Enabled">
+                            <label for="port4Enabled">Enable Port 4</label>
+                        </div>
                         <div class="hint">Enable a fourth serial port for additional batteries</div>
                     </div>
 
@@ -290,8 +316,10 @@
                     <div class="section-title">Home Assistant Integration</div>
                     
                     <div class="form-group">
-                        <label for="homeAssistantMode">Enable Home Assistant format</label>
-                        <input type="checkbox" id="homeAssistantMode" name="homeAssistantMode">
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="homeAssistantMode" name="homeAssistantMode">
+                            <label for="homeAssistantMode">Enable Home Assistant format</label>
+                        </div>
                         <div class="hint">Publish MQTT data in Home Assistant Pylontech Battery Card format</div>
                     </div>
 
