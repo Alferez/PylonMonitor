@@ -20,6 +20,12 @@ string responseTopic = "pyloncmd";
 string locationTopic = "PylonMonitor";
 string deviceTopic = "battery";
 string serialPort = "/dev/ttyAMA0";
+string serialPort2 = "";
+string serialPort3 = "";
+string serialPort4 = "";
+bool port2Enabled = false;
+bool port3Enabled = false;
+bool port4Enabled = false;
 bool homeAssistantMode = false;
 string homeAssistantPrefix = "pylontech";
 
@@ -58,6 +64,12 @@ bool saveDefaultConfigToJson()
     json_object_set_new(root, "locationTopic", json_string(locationTopic.c_str()));
     json_object_set_new(root, "deviceTopic", json_string(deviceTopic.c_str()));
     json_object_set_new(root, "serialPort", json_string(serialPort.c_str()));
+    json_object_set_new(root, "serialPort2", json_string(serialPort2.c_str()));
+    json_object_set_new(root, "serialPort3", json_string(serialPort3.c_str()));
+    json_object_set_new(root, "serialPort4", json_string(serialPort4.c_str()));
+    json_object_set_new(root, "port2Enabled", json_boolean(port2Enabled));
+    json_object_set_new(root, "port3Enabled", json_boolean(port3Enabled));
+    json_object_set_new(root, "port4Enabled", json_boolean(port4Enabled));
     json_object_set_new(root, "homeAssistantMode", json_boolean(homeAssistantMode));
     json_object_set_new(root, "homeAssistantPrefix", json_string(homeAssistantPrefix.c_str()));
     json_object_set_new(root, "pollInterval", json_integer(pollInterval));
@@ -183,6 +195,23 @@ bool readConfigFromJson()
     const char *serialPortStr = json_string_value(json_object_get(root, "serialPort"));
     if(serialPortStr) serialPort = serialPortStr;
     else serialPort = "/dev/ttyAMA0";
+    
+    const char *serialPort2Str = json_string_value(json_object_get(root, "serialPort2"));
+    if(serialPort2Str) serialPort2 = serialPort2Str;
+    else serialPort2 = "";
+    
+    const char *serialPort3Str = json_string_value(json_object_get(root, "serialPort3"));
+    if(serialPort3Str) serialPort3 = serialPort3Str;
+    else serialPort3 = "";
+    
+    const char *serialPort4Str = json_string_value(json_object_get(root, "serialPort4"));
+    if(serialPort4Str) serialPort4 = serialPort4Str;
+    else serialPort4 = "";
+    
+    port2Enabled = json_boolean_value(json_object_get(root, "port2Enabled"));
+    port3Enabled = json_boolean_value(json_object_get(root, "port3Enabled"));
+    port4Enabled = json_boolean_value(json_object_get(root, "port4Enabled"));
+    
     const char *haPrefixStr = json_string_value(json_object_get(root, "homeAssistantPrefix"));
     if(haPrefixStr) homeAssistantPrefix = haPrefixStr;
     else homeAssistantPrefix = "No";

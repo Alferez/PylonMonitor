@@ -73,11 +73,22 @@ READBATT::READBATT()
         memset(batteryInfo[i].consolePortRate, 0, sizeof(batteryInfo[i].consolePortRate));
     }
 
-    // initialize and open the RPI's internal serial interface
-    // this uses the primary serial interface on the RPI board
-    // take care of the comments in pylonmonitor.cpp: remapping of serial port
-    // the serial console must be switched OFF
+    // initialize and open the RPI's internal serial interface (Port 1 - always active)
     open_serial(B115200);
+
+    // Open additional serial ports if enabled
+    if(port2Enabled && serialPort2.length() > 0) {
+        printf("Opening Port 2: %s\n", serialPort2.c_str());
+        open_serial2(B115200);
+    }
+    if(port3Enabled && serialPort3.length() > 0) {
+        printf("Opening Port 3: %s\n", serialPort3.c_str());
+        open_serial3(B115200);
+    }
+    if(port4Enabled && serialPort4.length() > 0) {
+        printf("Opening Port 4: %s\n", serialPort4.c_str());
+        open_serial4(B115200);
+    }
 
     // create a thread that handles reading from the battery
     std::thread myThread(&READBATT::batteryhandler_thread,this);
@@ -106,7 +117,37 @@ void READBATT::serial_printf(const char *format, ...)
     va_end(args);
 
     for (int i = 0; buffer[i] != '\0'; ++i) {
-        write_serial((uint8_t)buffer[i]);
+        uint8_t byte = (uint8_t)buffer[i];
+        switch(activePort) {
+            case 1: write_serial(byte); break;
+            case 2: write_serial2(byte); break;
+            case 3: write_serial3(byte); break;
+            case 4: write_serial4(byte); break;
+        }
+    }
+}
+
+// Helper function to read from the active port
+int READBATT::read_active_port()
+{
+    switch(activePort) {
+        case 1: return read_serial();
+        case 2: return read_serial2();
+        case 3: return read_serial3();
+        case 4: return read_serial4();
+        default: return -1;
+    }
+}
+
+// Helper function to check write buffer free space on active port
+int READBATT::write_buffer_free()
+{
+    switch(activePort) {
+        case 1: return write_serial_free();
+        case 2: return write_serial2_free();
+        case 3: return write_serial3_free();
+        case 4: return write_serial4_free();
+        default: return 0;
     }
 }
 
@@ -121,16 +162,21 @@ static bool cycleInProgress = false;
 
     if(pylonState == PYLON_SEARCH) {
         // send LF, pylontech should respond with a prompt
-        printf("search batt\n");
+        printf("search batt on port %d\n", activePort);
         timeout = 0;
-        write_serial('\n');
+        switch(activePort) {
+            case 1: write_serial('\n'); break;
+            case 2: write_serial2('\n'); break;
+            case 3: write_serial3('\n'); break;
+            case 4: write_serial4('\n'); break;
+        }
         pylonState = PYLON_ACK;
         return;
     }
 
     if(pylonState == PYLON_ACK) {
         // wait for the prompt from the battery
-        int data = read_serial();  // -1 ... no data
+        int data = read_active_port();  // -1 ... no data
         if(data != -1) {
             // something was received from the battery
             uint8_t c = data;
@@ -176,7 +222,7 @@ static bool cycleInProgress = false;
         // wait for 1s before making a new request
         acttime++;
         // wait pollInterval seconds before starting a new cycle
-        if(cycleInProgress && battnum == 1) {
+        if(cycleInProgress && localBattnum == 1 && activePort == 1) {
             if(acttime - cycleStart < pollInterval * 10) {
                 usleep(100000);
                 return;
@@ -189,16 +235,53 @@ static bool cycleInProgress = false;
             return;
         }
         lasttime = acttime;
-        printf("req bat %d\n",battnum);
+        
+        // Check if we need to switch to next port
+        // Calculate how many batteries we've read on this port
+        if(localBattnum > portBattCount[activePort-1] && portBattCount[activePort-1] > 0) {
+            // Finished reading all batteries on this port, switch to next port
+            bool switched = false;
+            for(int nextPort = activePort + 1; nextPort <= 4; nextPort++) {
+                bool portEnabled = false;
+                if(nextPort == 2 && port2Enabled && serialPort2.length() > 0) portEnabled = true;
+                if(nextPort == 3 && port3Enabled && serialPort3.length() > 0) portEnabled = true;
+                if(nextPort == 4 && port4Enabled && serialPort4.length() > 0) portEnabled = true;
+                
+                if(portEnabled) {
+                    activePort = nextPort;
+                    localBattnum = 1;
+                    battnum = portOffset[nextPort-1] + 1;
+                    portCycleComplete = false;
+                    printf("Switching to port %d (local batt %d, global batt %d)\n", activePort, localBattnum, battnum);
+                    pylonState = PYLON_SEARCH;
+                    switched = true;
+                    break;
+                }
+            }
+            
+            if(!switched) {
+                // All ports done, wait for poll interval
+                cycleStart = acttime;
+                cycleInProgress = true;
+                localBattnum = 1;
+                battnum = 1;
+                activePort = 1;
+                portCycleComplete = true;
+                pylonState = PYLON_SEARCH;
+            }
+            return;
+        }
+        
+        printf("req bat %d on port %d (global %d)\n", localBattnum, activePort, battnum);
         // if the write buffer is full, restart the search to clear it
-        if(write_serial_free() == -1) {
+        if(write_buffer_free() == -1) {
             printf("write buffer full, restarting search\n");
             acttime = 0;
             lasttime = 0;
             pylonState = PYLON_SEARCH;
             return;
         }
-        serial_printf("bat %d\n", battnum);
+        serial_printf("bat %d\n", localBattnum);
         timeout = 0;
         rxidx = 0;
         pylonState = PYLON_READ;
@@ -213,15 +296,15 @@ static bool cycleInProgress = false;
             return;
         }
         lasttime = acttime;
-        printf("req info %d\n", battnum);
-        if(write_serial_free() == -1) {
+        printf("req info %d on port %d\n", localBattnum, activePort);
+        if(write_buffer_free() == -1) {
             printf("write buffer full, restarting search\n");
             acttime = 0;
             lasttime = 0;
             pylonState = PYLON_SEARCH;
             return;
         }
-        serial_printf("info %d\n", battnum);
+        serial_printf("info %d\n", localBattnum);
         timeout = 0;
         rxidx = 0;
         pylonState = PYLON_READ;
@@ -236,15 +319,15 @@ static bool cycleInProgress = false;
             return;
         }
         lasttime = acttime;
-        printf("req stat %d\n", battnum);
-        if(write_serial_free() == -1) {
+        printf("req stat %d on port %d\n", localBattnum, activePort);
+        if(write_buffer_free() == -1) {
             printf("write buffer full, restarting search\n");
             acttime = 0;
             lasttime = 0;
             pylonState = PYLON_SEARCH;
             return;
         }
-        serial_printf("stat %d\n", battnum);
+        serial_printf("stat %d\n", localBattnum);
         timeout = 0;
         rxidx = 0;
         pylonState = PYLON_READ;
@@ -254,7 +337,7 @@ static bool cycleInProgress = false;
     if(pylonState == PYLON_READ) {
         // read the response from the battery
         // read all bytes until the prompt is received
-        int c = read_serial();
+        int c = read_active_port();
         if(c != -1) {
             while(c != -1) {
                 // char received
@@ -272,10 +355,11 @@ static bool cycleInProgress = false;
 
                 if(strstr(pylon_rxbuf,"Invalid")) {
                     // this bat num does not exist
-                    // restart with bat 1                    
-                    battnum = 1;
+                    // advance to next battery
+                    localBattnum++;
+                    battnum++;
                     // empty the RX buffer
-                    while(read_serial() != -1) usleep(100);
+                    while(read_active_port() != -1) usleep(100);
                     acttime = 0;
                     lasttime =0;
                     pylonState = PYLON_REQUEST;
@@ -290,10 +374,12 @@ static bool cycleInProgress = false;
                     processBatData();
                     // if we just read pwr data, start with battery 1
                     if(strstr(pylon_rxbuf, "pwr") != NULL) {
-                        battnum = 1;
+                        localBattnum = 1;
+                        battnum = portOffset[activePort-1] + 1;
                     } else if(wasStatCommand) {
                         // Just read stat, go to next battery
-                        if(++battnum > MAXBATTNUMBER) battnum = 1;
+                        localBattnum++;
+                        battnum++;
                     } else if(wasInfoCommand) {
                         // Just read info, check if we need to request stat for this battery
                         // New models have isNewModel = true
@@ -303,7 +389,8 @@ static bool cycleInProgress = false;
                             return;
                         } else {
                             // go to next battery
-                            if(++battnum > MAXBATTNUMBER) battnum = 1;
+                            localBattnum++;
+                            battnum++;
                         }
                     } else {
                         // Just read bat data, check if we need to request info for this battery
@@ -314,22 +401,17 @@ static bool cycleInProgress = false;
                             return;
                         } else {
                             // go to the next battery (never read more than MAXBATTNUMBER batteries)
-                            if(++battnum > MAXBATTNUMBER) battnum = 1;
+                            localBattnum++;
+                            battnum++;
                         }
                     }
                     acttime = 0;
                     lasttime =0;
-                    // if this was the last battery in the cycle, wait pollInterval seconds
-                    if(battnum > battnumber) {
-                        battnum = 1;
-                        cycleStart = acttime;
-                        cycleInProgress = true;
-                    }
                     pylonState = PYLON_REQUEST;
                     return;
                 }
                 
-                c = read_serial();
+                c = read_active_port();
             }
         } else {
             // nothing received
@@ -403,14 +485,17 @@ void READBATT::processBatData()
     if(strstr(batteryString, "stat") != NULL) {
         // Parse stat response to get cycle count
         char *pos = (char *)batteryString;
-        int battNum = 0;
+        int battNum = battnum; // Use global battery number
         
         // Find battery number from the first line (after "stat ")
         char *statStr = strstr(pos, "stat ");
         if (statStr) {
-            battNum = atoi(statStr + 5);
+            int localNum = atoi(statStr + 5);
+            // Convert local to global
+            battNum = portOffset[activePort-1] + localNum;
         } else if (pos[0] >= '1' && pos[0] <= '9') {
-            battNum = atoi(pos);
+            int localNum = atoi(pos);
+            battNum = portOffset[activePort-1] + localNum;
         }
         
         // Helper function to extract value after colon and trim spaces/newlines
@@ -455,14 +540,17 @@ void READBATT::processBatData()
         // Parse info response to get battery details
         // Format is: "Field name        : Value"
         char *pos = (char *)batteryString;
-        int battNum = 0;
+        int battNum = battnum; // Use global battery number
         
         // Find battery number from the first line (after "info ")
         char *infoStr = strstr(pos, "info ");
         if (infoStr) {
-            battNum = atoi(infoStr + 5);
+            int localNum = atoi(infoStr + 5);
+            // Convert local to global
+            battNum = portOffset[activePort-1] + localNum;
         } else if (pos[0] >= '1' && pos[0] <= '9') {
-            battNum = atoi(pos);
+            int localNum = atoi(pos);
+            battNum = portOffset[activePort-1] + localNum;
         }
         
         // Helper function to extract value after colon and trim spaces/newlines
@@ -592,8 +680,23 @@ void READBATT::processBatData()
         }
         
         if(count > 0) {
-            battnumber = count;
-            printf("Battery count from pwr: %d\n", battnumber);
+            portBattCount[activePort-1] = count;
+            printf("Battery count from pwr on port %d: %d\n", activePort, count);
+            
+            // Calculate offset for this port based on previous ports
+            int offset = 0;
+            for(int i = 0; i < activePort-1; i++) {
+                offset += portBattCount[i];
+            }
+            portOffset[activePort-1] = offset;
+            
+            // Update battnum to start from the correct offset
+            battnum = offset + 1;
+            
+            // Update total battery count
+            totalBattCount = offset + count;
+            battnumber = totalBattCount;
+            printf("Port %d: offset=%d, total batteries=%d\n", activePort, offset, totalBattCount);
         }
         return;
     }
@@ -609,7 +712,10 @@ void READBATT::processBatData()
     while (line) {
         if(headerLinesCount == 0) {
             sscanf(line, "bat %d", &batNumber);
-            if(batNumber > 0) batNumber -= 1;
+            // Convert local battery number to global
+            if(batNumber > 0) {
+                batNumber = portOffset[activePort-1] + batNumber - 1;
+            }
         } else if(headerLinesCount >= 3 && cellCount < 15 && sscanf(line, "%d %lf %lf %lf %s %s %s %s %d%% %lf mAH %c",
             &cells[batNumber][cellCount].cellNumber, &cells[batNumber][cellCount].voltage, &cells[batNumber][cellCount].current,
             &cells[batNumber][cellCount].temperature, cells[batNumber][cellCount].state, cells[batNumber][cellCount].voltState,

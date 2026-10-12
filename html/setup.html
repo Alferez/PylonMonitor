@@ -238,9 +238,45 @@
                     <div class="section-title">Monitoring Settings</div>
                     
                     <div class="form-group">
-                        <label for="serialPort">Serial Port</label>
-                        <input type="text" id="serialPort" name="serialPort" placeholder="/dev/ttyAMA0">
-                        <div class="hint">Serial port device (e.g., /dev/ttyAMA0, /dev/ttyUSB0)</div>
+                        <label for="serialPort">Serial Port 1 (Required)</label>
+                        <input type="text" id="serialPort" name="serialPort" placeholder="/dev/ttyAMA0" required>
+                        <div class="hint">Primary serial port device (e.g., /dev/ttyAMA0, /dev/ttyUSB0)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="port2Enabled">Enable Port 2</label>
+                        <input type="checkbox" id="port2Enabled" name="port2Enabled">
+                        <div class="hint">Enable a second serial port for additional batteries</div>
+                    </div>
+
+                    <div class="form-group" id="port2Field" style="display: none;">
+                        <label for="serialPort2">Serial Port 2</label>
+                        <input type="text" id="serialPort2" name="serialPort2" placeholder="/dev/ttyUSB0">
+                        <div class="hint">Second serial port device</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="port3Enabled">Enable Port 3</label>
+                        <input type="checkbox" id="port3Enabled" name="port3Enabled">
+                        <div class="hint">Enable a third serial port for additional batteries</div>
+                    </div>
+
+                    <div class="form-group" id="port3Field" style="display: none;">
+                        <label for="serialPort3">Serial Port 3</label>
+                        <input type="text" id="serialPort3" name="serialPort3" placeholder="/dev/ttyUSB1">
+                        <div class="hint">Third serial port device</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="port4Enabled">Enable Port 4</label>
+                        <input type="checkbox" id="port4Enabled" name="port4Enabled">
+                        <div class="hint">Enable a fourth serial port for additional batteries</div>
+                    </div>
+
+                    <div class="form-group" id="port4Field" style="display: none;">
+                        <label for="serialPort4">Serial Port 4</label>
+                        <input type="text" id="serialPort4" name="serialPort4" placeholder="/dev/ttyUSB2">
+                        <div class="hint">Fourth serial port device</div>
                     </div>
 
                     <div class="form-group">
@@ -293,9 +329,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('locationTopic').value = data.locationTopic || '';
         document.getElementById('deviceTopic').value = data.deviceTopic || '';
         document.getElementById('serialPort').value = data.serialPort || '/dev/ttyAMA0';
+        document.getElementById('port2Enabled').checked = data.port2Enabled === true || data.port2Enabled === "true";
+        document.getElementById('serialPort2').value = data.serialPort2 || '';
+        document.getElementById('port3Enabled').checked = data.port3Enabled === true || data.port3Enabled === "true";
+        document.getElementById('serialPort3').value = data.serialPort3 || '';
+        document.getElementById('port4Enabled').checked = data.port4Enabled === true || data.port4Enabled === "true";
+        document.getElementById('serialPort4').value = data.serialPort4 || '';
         document.getElementById('pollInterval').value = data.pollInterval || 15;
         document.getElementById('homeAssistantMode').checked = data.homeAssistantMode === true || data.homeAssistantMode === "true";
         document.getElementById('homeAssistantPrefix').value = data.homeAssistantPrefix || 'battery';
+        
+        // Show/hide port fields based on checkbox state
+        togglePortFields();
     })
     .catch(error => {
         console.error('There was a problem with your fetch operation:', error);
@@ -331,6 +376,19 @@ function validateIP(ip) {
     var ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     return ipRegex.test(ip);
 }
+
+function togglePortFields() {
+    document.getElementById('port2Field').style.display = 
+        document.getElementById('port2Enabled').checked ? 'block' : 'none';
+    document.getElementById('port3Field').style.display = 
+        document.getElementById('port3Enabled').checked ? 'block' : 'none';
+    document.getElementById('port4Field').style.display = 
+        document.getElementById('port4Enabled').checked ? 'block' : 'none';
+}
+
+document.getElementById('port2Enabled').addEventListener('change', togglePortFields);
+document.getElementById('port3Enabled').addEventListener('change', togglePortFields);
+document.getElementById('port4Enabled').addEventListener('change', togglePortFields);
 
 document.getElementById('mqttBrokerIP').addEventListener('input', function() {
     var ip = this.value;

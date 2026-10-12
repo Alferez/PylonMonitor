@@ -11,6 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "locationTopic" => $_POST['locationTopic'],
         "deviceTopic" => $_POST['deviceTopic'],
         "serialPort" => $_POST['serialPort'],
+        "port2Enabled" => isset($_POST['port2Enabled']) ? true : false,
+        "serialPort2" => isset($_POST['serialPort2']) ? $_POST['serialPort2'] : '',
+        "port3Enabled" => isset($_POST['port3Enabled']) ? true : false,
+        "serialPort3" => isset($_POST['serialPort3']) ? $_POST['serialPort3'] : '',
+        "port4Enabled" => isset($_POST['port4Enabled']) ? true : false,
+        "serialPort4" => isset($_POST['serialPort4']) ? $_POST['serialPort4'] : '',
         "pollInterval" => $_POST['pollInterval'],
         "homeAssistantMode" => isset($_POST['homeAssistantMode']) ? true : false,
         "homeAssistantPrefix" => $_POST['homeAssistantPrefix']

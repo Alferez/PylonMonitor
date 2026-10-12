@@ -53,6 +53,8 @@ public:
 
 private:
     void serial_printf(const char *format, ...);
+    int read_active_port();
+    int write_buffer_free();
     void batteryhandler_thread();
     void loop_pylon();
     void setBatterySpecs(int battNum, const char* model);
@@ -81,6 +83,14 @@ private:
     int rxidx = 0;                      // index pointer for pylon_rxbuf
     BatteryCell cells[MAXBATTNUMBER][CELLNUMBER]; // array to hold all battery data
     BatteryInfo batteryInfo[MAXBATTNUMBER];       // array to hold battery info data
+    
+    // Multi-port support
+    int activePort = 1;                 // Currently active port (1-4)
+    int portOffset[4] = {0, 0, 0, 0};   // Battery number offset for each port
+    int portBattCount[4] = {0, 0, 0, 0}; // Number of batteries detected on each port
+    int totalBattCount = 0;             // Total batteries across all ports
+    bool portCycleComplete = false;     // Flag to indicate all ports have been read
+    int localBattnum = 1;               // Battery number for current port (1,2,3...)
 };
 
 #endif // _READBATT_H_

@@ -85,6 +85,108 @@ int read_serial()
     return read_serpipe(serid,'r');
 }
 
+// Functions for Port 2
+// ====================
+
+int serid2 = -1;
+
+void open_serial2(int speed)
+{
+    char serialPortBuf[50];
+    strncpy(serialPortBuf, serialPort2.c_str(), sizeof(serialPortBuf) - 1);
+    serialPortBuf[sizeof(serialPortBuf) - 1] = '\0';
+    serid2 = init_serial_interface(serialPortBuf,"", speed);
+    if(serid2 == -1)
+    {
+        printf("Cannot open Port 2 serial interface: %s\n", serialPort2.c_str());
+        exit(0);
+    }
+}
+
+int read_serial2()
+{
+    return read_serpipe(serid2,'r');
+}
+
+int write_serial2(int data)
+{
+    int ret = write_serpipe(serid2, data, 'w');
+    return ret;
+}
+
+int write_serial2_free()
+{
+    return check_pipe(serid2, 'w');
+}
+
+// Functions for Port 3
+// ====================
+
+int serid3 = -1;
+
+void open_serial3(int speed)
+{
+    char serialPortBuf[50];
+    strncpy(serialPortBuf, serialPort3.c_str(), sizeof(serialPortBuf) - 1);
+    serialPortBuf[sizeof(serialPortBuf) - 1] = '\0';
+    serid3 = init_serial_interface(serialPortBuf,"", speed);
+    if(serid3 == -1)
+    {
+        printf("Cannot open Port 3 serial interface: %s\n", serialPort3.c_str());
+        exit(0);
+    }
+}
+
+int read_serial3()
+{
+    return read_serpipe(serid3,'r');
+}
+
+int write_serial3(int data)
+{
+    int ret = write_serpipe(serid3, data, 'w');
+    return ret;
+}
+
+int write_serial3_free()
+{
+    return check_pipe(serid3, 'w');
+}
+
+// Functions for Port 4
+// ====================
+
+int serid4 = -1;
+
+void open_serial4(int speed)
+{
+    char serialPortBuf[50];
+    strncpy(serialPortBuf, serialPort4.c_str(), sizeof(serialPortBuf) - 1);
+    serialPortBuf[sizeof(serialPortBuf) - 1] = '\0';
+    serid4 = init_serial_interface(serialPortBuf,"", speed);
+    if(serid4 == -1)
+    {
+        printf("Cannot open Port 4 serial interface: %s\n", serialPort4.c_str());
+        exit(0);
+    }
+}
+
+int read_serial4()
+{
+    return read_serpipe(serid4,'r');
+}
+
+int write_serial4(int data)
+{
+    int ret = write_serpipe(serid4, data, 'w');
+    return ret;
+}
+
+int write_serial4_free()
+{
+    return check_pipe(serid4, 'w');
+}
+
 // Functions for the USB-serial converter located on the board
 // ===========================================================
 
