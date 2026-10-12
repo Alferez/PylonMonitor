@@ -363,6 +363,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('serialPort3').value = data.serialPort3 || '';
         document.getElementById('port4Enabled').checked = data.port4Enabled === true || data.port4Enabled === "true";
         document.getElementById('serialPort4').value = data.serialPort4 || '';
+        
+        // Enforce sequential port rule on load
+        if(!document.getElementById('port2Enabled').checked) {
+            document.getElementById('port3Enabled').checked = false;
+            document.getElementById('port4Enabled').checked = false;
+        }
+        if(!document.getElementById('port3Enabled').checked) {
+            document.getElementById('port4Enabled').checked = false;
+        }
         document.getElementById('pollInterval').value = data.pollInterval || 15;
         document.getElementById('homeAssistantMode').checked = data.homeAssistantMode === true || data.homeAssistantMode === "true";
         document.getElementById('homeAssistantPrefix').value = data.homeAssistantPrefix || 'battery';
@@ -405,7 +414,21 @@ function validateIP(ip) {
     return ipRegex.test(ip);
 }
 
+function enforceSequentialPorts() {
+    // Port 3 requires Port 2
+    if(!document.getElementById('port2Enabled').checked && document.getElementById('port3Enabled').checked) {
+        document.getElementById('port3Enabled').checked = false;
+        // Port 4 requires Port 3, so also disable Port 4
+        document.getElementById('port4Enabled').checked = false;
+    }
+    // Port 4 requires Port 3
+    if(!document.getElementById('port3Enabled').checked && document.getElementById('port4Enabled').checked) {
+        document.getElementById('port4Enabled').checked = false;
+    }
+}
+
 function togglePortFields() {
+    enforceSequentialPorts();
     document.getElementById('port2Field').style.display = 
         document.getElementById('port2Enabled').checked ? 'block' : 'none';
     document.getElementById('port3Field').style.display = 
