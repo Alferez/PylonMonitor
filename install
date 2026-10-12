@@ -4,7 +4,7 @@ RUTA=$(pwd)
 DAEMON='pylonmonitor'
 WEBPATH='/var/www/html'
 
-if [ !-f $RUTA/$DAEMON ]
+if [ ! -f $RUTA/$DAEMON ]
 then
 	echo "Before you need execute:"
 	echo "	./ prepare"
@@ -19,7 +19,7 @@ then
 	exit 1
 fi
 
-cp $RUTA/html $WEBPATH/
+cp $RUTA/html/* $WEBPATH/
 mkdir -p $WEBPATH/wxdata
 chmod 777 $WEBPATH/wxdata
 
