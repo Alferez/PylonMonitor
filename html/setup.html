@@ -114,6 +114,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        transition: opacity 0.3s ease;
     }
 
     .checkbox-row input[type="checkbox"] {
@@ -128,6 +129,19 @@
         cursor: pointer;
         color: #fff;
         font-size: 1em;
+    }
+
+    .checkbox-row.disabled {
+        opacity: 0.4;
+    }
+
+    .checkbox-row.disabled input[type="checkbox"] {
+        cursor: not-allowed;
+    }
+
+    .checkbox-row.disabled label {
+        cursor: not-allowed;
+        color: #666;
     }
 
     .btn-group {
@@ -278,7 +292,7 @@
                     </div>
 
                     <div class="form-group">
-                        <div class="checkbox-row">
+                        <div class="checkbox-row" id="port3Row">
                             <input type="checkbox" id="port3Enabled" name="port3Enabled">
                             <label for="port3Enabled">Enable Port 3</label>
                         </div>
@@ -292,7 +306,7 @@
                     </div>
 
                     <div class="form-group">
-                        <div class="checkbox-row">
+                        <div class="checkbox-row" id="port4Row">
                             <input type="checkbox" id="port4Enabled" name="port4Enabled">
                             <label for="port4Enabled">Enable Port 4</label>
                         </div>
@@ -376,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('homeAssistantMode').checked = data.homeAssistantMode === true || data.homeAssistantMode === "true";
         document.getElementById('homeAssistantPrefix').value = data.homeAssistantPrefix || 'battery';
         
-        // Show/hide port fields based on checkbox state
+        // Show/hide port fields based on checkbox state and enforce sequential rule
         togglePortFields();
     })
     .catch(error => {
@@ -415,15 +429,44 @@ function validateIP(ip) {
 }
 
 function enforceSequentialPorts() {
+    var port2Checked = document.getElementById('port2Enabled').checked;
+    var port3Checked = document.getElementById('port3Enabled').checked;
+    var port4Checked = document.getElementById('port4Enabled').checked;
+    
     // Port 3 requires Port 2
-    if(!document.getElementById('port2Enabled').checked && document.getElementById('port3Enabled').checked) {
+    if(!port2Checked && port3Checked) {
         document.getElementById('port3Enabled').checked = false;
+        port3Checked = false;
         // Port 4 requires Port 3, so also disable Port 4
         document.getElementById('port4Enabled').checked = false;
+        port4Checked = false;
     }
     // Port 4 requires Port 3
-    if(!document.getElementById('port3Enabled').checked && document.getElementById('port4Enabled').checked) {
+    if(!port3Checked && port4Checked) {
         document.getElementById('port4Enabled').checked = false;
+        port4Checked = false;
+    }
+    
+    // Update disabled visual state
+    var port3Row = document.getElementById('port3Row');
+    var port4Row = document.getElementById('port4Row');
+    
+    if(!port2Checked) {
+        port3Row.classList.add('disabled');
+        document.getElementById('port3Enabled').disabled = true;
+        port4Row.classList.add('disabled');
+        document.getElementById('port4Enabled').disabled = true;
+    } else {
+        port3Row.classList.remove('disabled');
+        document.getElementById('port3Enabled').disabled = false;
+    }
+    
+    if(!port3Checked) {
+        port4Row.classList.add('disabled');
+        document.getElementById('port4Enabled').disabled = true;
+    } else {
+        port4Row.classList.remove('disabled');
+        document.getElementById('port4Enabled').disabled = false;
     }
 }
 
